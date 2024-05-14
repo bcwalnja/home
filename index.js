@@ -1,3 +1,3 @@
 const welcomeText = document.createElement('h3');
-welcomeText.textContent = "Welcome to Nate's page";
+welcomeText.textContent = "Hello from index.js!";
 document.body.appendChild(welcomeText);
