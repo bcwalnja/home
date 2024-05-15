@@ -1,14 +1,26 @@
+var canvas = document.getElementById('container');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 var points = [],
-  velocity2 = 5, // velocity squared
-  canvas =
-    document.getElementById('container'),
+  velocity2 = 15, // velocity squared
   context = canvas.getContext('2d'),
   radius = 2,
   boundaryX = canvas.width,
   boundaryY = canvas.height,
-  numberOfPoints = 30;
+  numberOfPoints = 3000;
+
+// attach a listener to the window resize event
+// to keep the canvas sized to the window
+window.addEventListener('resize', function () {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  boundaryX = canvas.width;
+  boundaryY = canvas.height;
+});
+
 
 init();
+
 
 function init() {
   // create points
@@ -75,6 +87,9 @@ function drawLine(x1, y1, x2, y2) {
 }
 
 function draw() {
+  context.font = "48px serif";
+  context.fillText('HTML5 Canvas', 100, 100);
+
   for (var i = 0, l = points.length; i < l; i++) {
     // circles
     var point = points[i];
@@ -97,7 +112,7 @@ function draw() {
 }
 
 function animate() {
-  context.clearRect(0, 0, boundaryX, boundaryY);
+  context.clearRect(0, 0, canvas.width, canvas.height);
   draw();
   requestAnimationFrame(animate);
 }
