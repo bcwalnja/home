@@ -7,7 +7,7 @@ var points = [],
   radius = 2,
   boundaryX = canvas.width,
   boundaryY = canvas.height,
-  numberOfPoints = 3000;
+  numberOfPoints = 30000;
 
 // attach a listener to the window resize event
 // to keep the canvas sized to the window
