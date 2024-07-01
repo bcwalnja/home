@@ -1,14 +1,16 @@
 var canvas = document.getElementById('container');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-var points = [],
-  velocity2 = 15, // velocity squared
-  context = canvas.getContext('2d'),
-  radius = 2,
-  boundaryX = canvas.width,
-  boundaryY = canvas.height,
-  numberOfPoints = 30000;
-
+var velocity,
+  context,
+  font,
+  fontSize,
+  startTime,
+  wasClicked,
+  timer,
+  q;
+var clickableTextObjects = [];
+var explosions = [];
 // attach a listener to the window resize event
 // to keep the canvas sized to the window
 window.addEventListener('resize', function () {
@@ -16,103 +18,127 @@ window.addEventListener('resize', function () {
   canvas.height = window.innerHeight;
   boundaryX = canvas.width;
   boundaryY = canvas.height;
+  context.font = font;
+  context.fillStyle = 'white';
 });
 
+canvas.addEventListener('click', function (event) {
+  var x = event.clientX;
+  var y = event.clientY;
+  var objectWasClicked = false;
+  clickableTextObjects.forEach(function (obj) {
+    if (x >= obj.x - 10 && x <= obj.x + context.measureText(obj.text).width + 10 &&
+      y >= obj.y - fontSize - 10 && y <= obj.y + 10) {
+      objectWasClicked = true;
+      if (obj.onClicked) {
+        obj.onClicked();
+      }
+    }
+  });
+  if (!objectWasClicked) {
+    addExplosion(x, y);
+  }
+});
 
 init();
-
+animate();
 
 function init() {
-  // create points
-  for (var i = 0; i < numberOfPoints; i++) {
-    createPoint();
-  }
-  // create connections
-  for (var i = 0, l = points.length; i < l; i++) {
-    var point = points[i];
-    if (i == 0) {
-      points[i].buddy = points[points.length - 1];
-    } else {
-      points[i].buddy = points[i - 1];
-    }
-  }
+  velocity = canvas.height / 1000;
+  context = canvas.getContext('2d');
+  fontSize = 20;
+  font = fontSize + 'px Arial';
+  context.font = font;
+  context.fillStyle = 'white';
+  
+  q = {};
+  q.x = canvas.width / 2 - context.measureText(q.text).width / 2;
+  q.y = fontSize;
+  q.text = 'math question will go here';
+  q.wasClicked = false;
+  q.onClicked = qOnClicked;
+  clickableTextObjects.push(q);
 
-  // animate
-  animate();
-}
-
-function createPoint() {
-  var point = {}, vx2, vy2;
-  point.x = Math.random() * boundaryX;
-  point.y = Math.random() * boundaryY;
-  // random vx 
-  point.vx = (Math.floor(Math.random()) * 2 - 1) * Math.random();
-  vx2 = Math.pow(point.vx, 2);
-  // vy^2 = velocity^2 - vx^2
-  vy2 = velocity2 - vx2;
-  point.vy = Math.sqrt(vy2) * (Math.random() * 2 - 1);
-  points.push(point);
-}
-
-function resetVelocity(point, axis, dir) {
-  var vx, vy;
-  if (axis == 'x') {
-    point.vx = dir * Math.random();
-    vx2 = Math.pow(point.vx, 2);
-    // vy^2 = velocity^2 - vx^2
-    vy2 = velocity2 - vx2;
-    point.vy = Math.sqrt(vy2) * (Math.random() * 2 - 1);
-  } else {
-    point.vy = dir * Math.random();
-    vy2 = Math.pow(point.vy, 2);
-    // vy^2 = velocity^2 - vx^2
-    vx2 = velocity2 - vy2;
-    point.vx = Math.sqrt(vx2) * (Math.random() * 2 - 1);
-  }
-}
-
-function drawCircle(x, y) {
-  context.beginPath();
-  context.arc(x, y, radius, 0, 2 * Math.PI, false);
-  context.fillStyle = '#97badc';
-  context.fill();
-}
-
-function drawLine(x1, y1, x2, y2) {
-  context.beginPath();
-  context.moveTo(x1, y1);
-  context.lineTo(x2, y2);
-  context.strokeStyle = '#8ab2d8'
-  context.stroke();
+  startTime = Date.now();
+  timer = {};
+  timer.x = 0;
+  timer.y = fontSize;
+  timer.text = '120 seconds remaining';
+  timer.onClicked = timerOnClicked;
+  clickableTextObjects.push(timer);
 }
 
 function draw() {
-  context.font = "48px serif";
-  context.fillText('HTML5 Canvas', 100, 100);
-
-  for (var i = 0, l = points.length; i < l; i++) {
-    // circles
-    var point = points[i];
-    point.x += point.vx;
-    point.y += point.vy;
-    drawCircle(point.x, point.y);
-    // lines
-    // drawLine(point.x, point.y, point.buddy.x, point.buddy.y);
-    // check for edge
-    if (point.x < 0 + radius) {
-      resetVelocity(point, 'x', 1);
-    } else if (point.x > boundaryX - radius) {
-      resetVelocity(point, 'x', -1);
-    } else if (point.y < 0 + radius) {
-      resetVelocity(point, 'y', 1);
-    } else if (point.y > boundaryY - radius) {
-      resetVelocity(point, 'y', -1);
-    }
-  }
+  renderQuestion();
+  renderTimer();
+  renderExplosions();
 }
 
 function animate() {
   context.clearRect(0, 0, canvas.width, canvas.height);
   draw();
   requestAnimationFrame(animate);
+}
+
+function renderQuestion() {
+  if (!q.wasClicked && q.y < canvas.height - fontSize) {
+    q.y += velocity;
+  }
+  context.fillText(q.text, q.x, q.y);
+}
+
+function renderTimer() {
+  timer.timeRemaining = 120 - (Date.now() - startTime) / 1000;
+  if (timer.timeRemaining < 1) {
+    timer.text = 'Time is up!';
+  } else {
+    timer.text = Math.round(timer.timeRemaining) + ' seconds remaining';
+  }
+  context.fillText(timer.text, timer.x, timer.y);
+}
+
+function renderExplosions() {
+  if (!explosions) {
+    return;
+  }
+  var now = Date.now();
+  explosions.forEach(explosion => {
+    if (!explosion.points) {
+      return;
+    } else if (now - explosion.startTime > 3000) {
+      removeExplosion();
+      return;
+    } else {
+        explosion.points.forEach(point => {
+          point.x += point.dx;
+          point.y += point.dy;
+          context.fillRect(point.x, point.y, 2, 2);
+        });
+      }
+  });
+}
+
+function addExplosion(x, y) {
+  var explosion = {x: x, y: y};
+  explosion.startTime = Date.now();
+  explosion.points = [];
+  var rand = Math.floor(Math.random() * 100);
+  for (let i = 0; i < rand; i++) {
+    var dx = (Math.random() - 0.5) * 20;
+    var dy = (Math.random() - 0.5) * 20;
+    explosion.points.push({ x: x, y: y, dx: dx, dy: dy })
+  }
+  explosions.push(explosion);
+}
+
+function removeExplosion() {
+  explosions.shift();
+}
+
+function qOnClicked() {
+  q.wasClicked = !q.wasClicked;
+};
+
+function timerOnClicked() {
+  startTime += 1000;
 }
