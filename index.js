@@ -1,118 +1,114 @@
 var canvas = document.getElementById('container');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-var points = [],
-  velocity2 = 15, // velocity squared
-  context = canvas.getContext('2d'),
-  radius = 2,
-  boundaryX = canvas.width,
-  boundaryY = canvas.height,
-  numberOfPoints = 30000;
+var width = canvas.width = window.innerWidth;
+var height = canvas.height = window.innerHeight;
 
 // attach a listener to the window resize event
 // to keep the canvas sized to the window
 window.addEventListener('resize', function () {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  boundaryX = canvas.width;
-  boundaryY = canvas.height;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    boundaryX = canvas.width;
+    boundaryY = canvas.height;
+    setFontStyle();
 });
 
+// define variables
+var context = canvas.getContext('2d');
+var font,
+    fontSize,
+    question, 
+    answers, 
+    correctAnswer, 
+    totalRight, 
+    totalQuestions, 
+    score, 
+    timeGameWasStarted, 
+    timer, 
+    isGameOver,
+    cellWidth,
+    cellHeight;
 
 init();
-
+animate();
 
 function init() {
-  // create points
-  for (var i = 0; i < numberOfPoints; i++) {
-    createPoint();
-  }
-  // create connections
-  for (var i = 0, l = points.length; i < l; i++) {
-    var point = points[i];
-    if (i == 0) {
-      points[i].buddy = points[points.length - 1];
-    } else {
-      points[i].buddy = points[i - 1];
-    }
-  }
+    timeGameWasStarted = new Date();
 
-  // animate
-  animate();
-}
+    setFontStyle();
+    
 
-function createPoint() {
-  var point = {}, vx2, vy2;
-  point.x = Math.random() * boundaryX;
-  point.y = Math.random() * boundaryY;
-  // random vx 
-  point.vx = (Math.floor(Math.random()) * 2 - 1) * Math.random();
-  vx2 = Math.pow(point.vx, 2);
-  // vy^2 = velocity^2 - vx^2
-  vy2 = velocity2 - vx2;
-  point.vy = Math.sqrt(vy2) * (Math.random() * 2 - 1);
-  points.push(point);
-}
-
-function resetVelocity(point, axis, dir) {
-  var vx, vy;
-  if (axis == 'x') {
-    point.vx = dir * Math.random();
-    vx2 = Math.pow(point.vx, 2);
-    // vy^2 = velocity^2 - vx^2
-    vy2 = velocity2 - vx2;
-    point.vy = Math.sqrt(vy2) * (Math.random() * 2 - 1);
-  } else {
-    point.vy = dir * Math.random();
-    vy2 = Math.pow(point.vy, 2);
-    // vy^2 = velocity^2 - vx^2
-    vx2 = velocity2 - vy2;
-    point.vx = Math.sqrt(vx2) * (Math.random() * 2 - 1);
-  }
-}
-
-function drawCircle(x, y) {
-  context.beginPath();
-  context.arc(x, y, radius, 0, 2 * Math.PI, false);
-  context.fillStyle = '#97badc';
-  context.fill();
-}
-
-function drawLine(x1, y1, x2, y2) {
-  context.beginPath();
-  context.moveTo(x1, y1);
-  context.lineTo(x2, y2);
-  context.strokeStyle = '#8ab2d8'
-  context.stroke();
-}
-
-function draw() {
-  context.font = "48px serif";
-  context.fillText('HTML5 Canvas', 100, 100);
-
-  for (var i = 0, l = points.length; i < l; i++) {
-    // circles
-    var point = points[i];
-    point.x += point.vx;
-    point.y += point.vy;
-    drawCircle(point.x, point.y);
-    // lines
-    // drawLine(point.x, point.y, point.buddy.x, point.buddy.y);
-    // check for edge
-    if (point.x < 0 + radius) {
-      resetVelocity(point, 'x', 1);
-    } else if (point.x > boundaryX - radius) {
-      resetVelocity(point, 'x', -1);
-    } else if (point.y < 0 + radius) {
-      resetVelocity(point, 'y', 1);
-    } else if (point.y > boundaryY - radius) {
-      resetVelocity(point, 'y', -1);
-    }
-  }
+    cellWidth = canvas.width / 4;
+    cellHeight = canvas.height / 4;
+    score = 0;
 }
 
 function animate() {
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  draw();
-  requestAnimationFrame(animate);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    draw();
+    requestAnimationFrame(animate);
+}
+
+function draw() {
+    // draw score at the top left
+    drawScore();
+
+    // draw time remaining at the top right
+    drawTimeRemaining();
+
+    // draw math question at the top
+    drawMathQuestion();
+
+    // draw four answers at the bottom
+
+}
+
+function drawMathQuestion() {
+    function rand() {
+        return Math.floor(Math.random() * 10) + 1;
+    }
+    
+    if (!question) {
+        question = {};
+        question.num1 = rand();
+        question.num2 = rand();
+        question.answer = question.num1 * question.num2;
+        question.wrongAnswer1 = rand() * rand();
+        question.wrongAnswer2 = rand() * rand();
+        question.wrongAnswer3 = rand() * rand();
+        question.text = num1 + ' x ' + num2 + ' = ??';
+    }
+    
+    var x = canvas.width / 2;
+    var y = fontSize;
+    context.fillText(question.text, x, y);
+
+    //give question a downward velocity that it will take 10 seconds to reach the bottom
+    question.vy = canvas.height / 10;
+    question.y = 0;
+    question.x = canvas.width / 2;
+}
+
+function drawScore() {
+    x = 0;
+    y = fontSize;
+    context.fillText('Score: ' + score, x, y);
+}
+
+function drawTimeRemaining() {
+    //time remaining is the number of seconds remaining in 2 minutes since game start
+    var timeRemaining = 120 - (new Date() - timeGameWasStarted) / 1000;
+    timeRemaining = timeRemaining.toFixed(0);
+    
+    var text = 'Time: ' + timeRemaining;
+    var textPixels = context.measureText(text, font);
+    var x = canvas.width - textPixels.width;
+    var y = fontSize;
+    context.fillText(text, x, y);
+}
+
+function setFontStyle() {
+    fontSize = canvas.width / 40;
+    font = fontSize + 'px Arial';
+    context.font = font;
+    context.fillStyle = 'white';
 }
