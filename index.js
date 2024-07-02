@@ -25,21 +25,19 @@ window.addEventListener('resize', function () {
 });
 
 canvas.addEventListener('click', function (event) {
-  var x = event.clientX;
-  var y = event.clientY;
-  var objectWasClicked = false;
   clickableTextObjects.forEach(function (obj) {
-    if (x >= obj.x - 10 && x <= obj.x + context.measureText(obj.text).width + 10 &&
-      y >= obj.y - fontSize - 10 && y <= obj.y + 10) {
-      objectWasClicked = true;
+    var buffer = canvas.height / 25;
+    var top = obj.y - buffer;
+    var bottom = obj.y + fontSize + buffer;
+    var left = obj.x - buffer;
+    var right = obj.x + context.measureText(obj.text).width + buffer;
+    if (event.x >= left && event.x <= right &&
+      event.y >= top && event.y <= bottom) {
       if (obj.onClicked) {
         obj.onClicked(obj);
       }
     }
   });
-  if (!objectWasClicked) {
-    addExplosion(x, y);
-  }
 });
 
 init();
@@ -74,7 +72,7 @@ function draw() {
 
   renderQuestion();
   renderAnswers();
-  
+
   renderScore();
   renderTimer();
   renderExplosions();
@@ -110,47 +108,64 @@ function generateNewQuestion() {
   q1.text = q1.term1 + ' * ' + q1.term2 + ' = ?';
   q1.complete = false;
   q.push(q1);
+
+  if (a && a.length && !a.some(x => x.text == q[q.length - 1].answer)) {
+    var i = rand(1, 4);
+    while (true) {
+      if (a[i]?.wasClicked === true) {
+        continue;
+      } else {
+        a[i].text = q1.answer;
+        break;
+      }
+    }
+  }
+}
+
+function generateNewAnswersForNonClicked() {
+  log('generating new answers for non-clicked answers');
+  var correct = rand(1, 3);
+  var nonClicked = a.filter(x => !x.wasClicked);
+  var answers = getAnswerValues();
+  for (let i = 0; i < nonClicked.length; i++) {
+    if (i == correct) {
+      nonClicked[i].text = q[q.length - 1].answer;
+    } else {
+      nonClicked[i].text = answers[i];
+    }
+  }
+
 }
 
 function generateNewAnswers() {
   log('generating new answers');
 
-  a = {};
-  a.a1 = {};
-  a.a2 = {};
-  a.a3 = {};
-  a.a4 = {};
-
-  function getAnswers() {
-    var a1, a2, a3, a4;
-    while (a1 === a2 || a1 === a3 || a1 === a4 || a2 === a3 || a2 === a4 || a3 === a4) {
-      a1 = rand(1, 12) * rand(1, 12);
-      a2 = rand(1, 12) * rand(1, 12);
-      a3 = rand(1, 12) * rand(1, 12);
-      a4 = rand(1, 12) * rand(1, 12);
-    }
-    return [a1, a2, a3, a4];
+  if (!a || !a.length) {
+    a = [{}, {}, {}, {}];
   }
 
-  var rightAnswer = rand(1, 4);
-  var answers = getAnswers();
-  var answer = q[0].answer;
-  a.a1.text = rightAnswer == 1 ? answer : answers[0];
-  a.a2.text = rightAnswer == 2 ? answer : answers[1];
-  a.a3.text = rightAnswer == 3 ? answer : answers[2];
-  a.a4.text = rightAnswer == 4 ? answer : answers[3];
+  // if all four answers are nonzero and
+  // one of the answers already matches q.answer, no need to generate new answers
+  if (a.every(x => x.text > 0) && a.some(x => x.text == q[q.length - 1].answer)) {
+    return;
+  }
 
-  a.a1.y = a.a2.y = a.a3.y = a.a4.y = canvas.height - fontSize - 10;
-  a.a1.x = canvas.width * 0.1;
-  a.a2.x = canvas.width * 0.3;
-  a.a3.x = canvas.width * 0.5;
-  a.a4.x = canvas.width * 0.7;
+  var answers = getAnswerValues();
 
-  a.a1.onClicked = a.a2.onClicked = a.a3.onClicked = a.a4.onClicked = aOnClicked;
-  clickableTextObjects.push(a.a1);
-  clickableTextObjects.push(a.a2);
-  clickableTextObjects.push(a.a3);
-  clickableTextObjects.push(a.a4);
+  for (let i = 0; i < a.length; i++) {
+    a[i].text = answers[i];
+    a[i].wasClicked = false;
+    a[i].x = canvas.width * ((i + 1) / 5 - .1);
+    a[i].y = canvas.height - fontSize - 10;
+    a[i].dx = 0;
+    a[i].dy = 0;
+    a[i].onClicked = aOnClicked;
+
+    if (!clickableTextObjects.includes(a[i])) {
+      clickableTextObjects.push(a[i]
+      );
+    }
+  }
 }
 
 function renderQuestion() {
@@ -168,54 +183,39 @@ function renderQuestion() {
 function renderAnswers() {
   verbose('renderAnswers');
 
-  //if any have dx or dy, they were clicked, so increase their x and y
-  if (a.a1.dx) {
-    a.a1.x += a.a1.dx;
-    a.a1.y += a.a1.dy;
-  }
-  if (a.a2.dx) {
-    a.a2.x += a.a2.dx;
-    a.a2.y += a.a2.dy;
-  }
-  if (a.a3.dx) {
-    a.a3.x += a.a3.dx;
-    a.a3.y += a.a3.dy;
-  }
-  if (a.a4.dx) {
-    a.a4.x += a.a4.dx;
-    a.a4.y += a.a4.dy;
-  }
+  // TODO: ryan's suggestion is that once an answer is clicked,
+  // separate it out from the others and regenerate the other four
+  // that way the user can answer questions as fast as they want to
 
-  context.fillText(a.a1.text, a.a1.x, a.a1.y);
-  context.fillText(a.a2.text, a.a2.x, a.a2.y);
-  context.fillText(a.a3.text, a.a3.x, a.a3.y);
-  context.fillText(a.a4.text, a.a4.x, a.a4.y);
+  //if any have dx or dy, they were clicked, so increase their x and y
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].dx) {
+      a[i].x += a[i].dx;
+      a[i].y += a[i].dy;
+    }
+
+    context.fillText(a[i].text, a[i].x, a[i].y);
+  }
 }
 
 function checkIfQuestionIsAnswered() {
   verbose('checkIfQuestionIsAnswered');
   // if any answer has entered the question hit box, q is complete
   var answer;
-  if (q[0].y < a.a1.y + fontSize && q[0].y > a.a1.y - fontSize &&
-    a.a1.x > q[0].x - context.measureText(q[0].text).width / 2 &&
-    a.a1.x < q[0].x + context.measureText(q[0].text).width / 2) {
-    q[0].complete = true;
-    answer = a.a1.text;
-  } else if (q[0].y < a.a2.y + fontSize && q[0].y > a.a2.y - fontSize &&
-    a.a2.x > q[0].x - context.measureText(q[0].text).width / 2 &&
-    a.a2.x < q[0].x + context.measureText(q[0].text).width / 2) {
-    q[0].complete = true;
-    answer = a.a2.text;
-  } else if (q[0].y < a.a3.y + fontSize && q[0].y > a.a3.y - fontSize &&
-    a.a3.x > q[0].x - context.measureText(q[0].text).width / 2 &&
-    a.a3.x < q[0].x + context.measureText(q[0].text).width / 2) {
-    q[0].complete = true;
-    answer = a.a3.text;
-  } else if (q[0].y < a.a4.y + fontSize && q[0].y > a.a4.y - fontSize &&
-    a.a4.x > q[0].x - context.measureText(q[0].text).width / 2 &&
-    a.a4.x < q[0].x + context.measureText(q[0].text).width / 2) {
-    q[0].complete = true;
-    answer = a.a4.text;
+
+  for (let i = 0; i < a.length; i++) {
+    var top = a[i].y - fontSize;
+    var bottom = a[i].y + fontSize;
+    var left = a[i].x - context.measureText(a[i].text).width / 2;
+    var right = a[i].x + context.measureText(a[i].text).width
+
+    if (q[0].y < bottom && q[0].y > top &&
+      q[0].x > left && q[0].x < right) {
+      q[0].complete = true;
+      answer = a[i].text;
+      a[i] = {};
+      break;
+    }
   }
 
   if (q[0].complete) {
@@ -226,16 +226,34 @@ function checkIfQuestionIsAnswered() {
       var y = q[0].y + rand(-10, 10);
       addExplosion(x, y);
     }
+
     if (answer && answer == q[0].answer) {
       score += 2;
     } else {
       score -= 1;
     }
-    
+
     removeQuestion();
     generateNewQuestion();
-    generateNewAnswers();
+    generateNewAnswersForNonClicked();
   }
+}
+
+function getAnswerValues() {
+  var a1, a2, a3, a4;
+  while (a1 === a2 || a1 === a3 || a1 === a4 || a2 === a3 || a2 === a4 || a3 === a4) {
+    a1 = rand(1, 12) * rand(1, 12);
+    a2 = rand(1, 12) * rand(1, 12);
+    a3 = rand(1, 12) * rand(1, 12);
+    a4 = rand(1, 12) * rand(1, 12);
+  }
+
+  var newA = [a1, a2, a3, a4];
+
+  if (a1 != q[0].answer && a2 != q[0].answer && a3 != q[0].answer && a4 != q[0].answer) {
+    newA[rand(0, 4)] = q[0].answer;
+  }
+  return newA;
 }
 
 function renderTimer() {
@@ -271,9 +289,17 @@ function renderExplosions() {
       return;
     } else {
       explosion.points.forEach(point => {
+        context.save();
+        if (!point.color) {
+          var color = 'rgb(' + rand(200, 255) + ', ' + rand(0, 255) + ', 0)';
+          point.color = color;
+        }
+        context.fillStyle = point.color;
+
         point.x += point.dx;
         point.y += point.dy;
         context.fillRect(point.x, point.y, 2, 2);
+        context.restore();
       });
     }
   });
@@ -286,7 +312,7 @@ function addExplosion(x, y) {
   explosion.points = [];
 
   function r() { return (Math.random() - 0.5) * 2 };
-  
+
   for (let i = 0; i < rand(25, 50); i++) {
     var dx = Math.exp(r()) * r();
     var dy = Math.exp(r()) * r();
@@ -303,14 +329,20 @@ function removeExplosion() {
 function removeQuestion() {
   log('removeQuestion');
   q.shift();
+  a.forEach(x => {
+    if (x.wasClicked) {
+      x = {};
+    }
+  });
 }
 
-function aOnClicked(obj) {
-  log('answer ' + obj.text + ' was clicked');
+function aOnClicked(answer) {
+  log('answer ' + answer.text + ' was clicked');
   //figure out where the question is at and move the answer there
-  obj.dx = (q[0].x - obj.x) / 100;
+  answer.dx = (q[0].x - answer.x) / 100;
   var yBuffer = canvas.height * .1
-  obj.dy = (q[0].y - obj.y + yBuffer) / 100;
+  answer.dy = (q[0].y - answer.y + yBuffer) / 100;
+  answer.wasClicked = true;
 
   generateNewQuestion();
 }
