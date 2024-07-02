@@ -221,7 +221,7 @@ function checkIfQuestionIsAnswered() {
   if (q[0].complete) {
     log('question was answered');
     // add a bunch of explosions
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 20; i++) {
       var x = q[0].x + rand(-10, 10);
       var y = q[0].y + rand(-10, 10);
       addExplosion(x, y);
@@ -233,6 +233,7 @@ function checkIfQuestionIsAnswered() {
     }
     
     removeQuestion();
+    generateNewQuestion();
     generateNewAnswers();
   }
 }
@@ -265,7 +266,7 @@ function renderExplosions() {
   explosions.forEach(explosion => {
     if (!explosion.points) {
       return;
-    } else if (now - explosion.startTime > 3000) {
+    } else if (now - explosion.startTime > 15000) {
       removeExplosion();
       return;
     } else {
@@ -283,10 +284,12 @@ function addExplosion(x, y) {
   var explosion = { x: x, y: y };
   explosion.startTime = Date.now();
   explosion.points = [];
-  var rand = Math.floor(Math.random() * 100);
-  for (let i = 0; i < rand; i++) {
-    var dx = (Math.random() - 0.5) * 20;
-    var dy = (Math.random() - 0.5) * 20;
+
+  function r() { return (Math.random() - 0.5) * 2 };
+  
+  for (let i = 0; i < rand(25, 50); i++) {
+    var dx = Math.exp(r()) * r();
+    var dy = Math.exp(r()) * r();
     explosion.points.push({ x: x, y: y, dx: dx, dy: dy })
   }
   explosions.push(explosion);
