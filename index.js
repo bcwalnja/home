@@ -7,6 +7,7 @@ var velocity,
   fontSize,
   startTime,
   wasClicked,
+  score,
   timer,
   a,
   q;
@@ -47,7 +48,7 @@ animate();
 function init() {
   velocity = canvas.height / 1000;
   context = canvas.getContext('2d');
-  
+
   fontSize = Math.floor(canvas.height / 20);
   font = fontSize + 'px Arial';
   context.font = font;
@@ -60,19 +61,21 @@ function init() {
   timer.text = '120 seconds remaining';
   timer.onClicked = timerOnClicked;
   clickableTextObjects.push(timer);
+
+  generateNewQuestion();
+  generateNewAnswers();
 }
 function draw() {
   verbose('draw');
-  if (!q || q.complete) {
+  if (!q || !q.length) {
     generateNewQuestion();
-    generateNewAnswers();
   }
+  checkIfQuestionIsAnswered();
 
   renderQuestion();
   renderAnswers();
-
-  checkIfQuestionIsAnswered();
-
+  
+  renderScore();
   renderTimer();
   renderExplosions();
 }
@@ -91,20 +94,27 @@ function rand(min = 1, max = 10) {
 
 function generateNewQuestion() {
   log('generating a new question');
-  q = {};
-  q.x = canvas.width / 2 - context.measureText(q.text).width / 2;
-  q.y = fontSize;
-  q.term1 = rand(1, 12);
-  q.term2 = rand(1, 12);
-  q.answer = q.term1 * q.term2;
-  q.text = q.term1 + ' * ' + q.term2 + ' = ?';
-  q.complete = false;
-  q.onClicked = qOnClicked;
-  clickableTextObjects.push(q);
+
+  // q should never have more than two questions in it
+  if (q && q.length > 1) {
+    return;
+  }
+
+  q ??= [];
+  var q1 = {};
+  q1.x = canvas.width / 2 - context.measureText(q1.text).width / 2;
+  q1.y = fontSize;
+  q1.term1 = rand(1, 12);
+  q1.term2 = rand(1, 12);
+  q1.answer = q1.term1 * q1.term2;
+  q1.text = q1.term1 + ' * ' + q1.term2 + ' = ?';
+  q1.complete = false;
+  q.push(q1);
 }
 
 function generateNewAnswers() {
   log('generating new answers');
+
   a = {};
   a.a1 = {};
   a.a2 = {};
@@ -113,7 +123,7 @@ function generateNewAnswers() {
 
   function getAnswers() {
     var a1, a2, a3, a4;
-    while (a1 === a2 || a1 === a3 || a2 === a3 || a1 === a4 || a2 === a4 || a3 === a4) {
+    while (a1 === a2 || a1 === a3 || a1 === a4 || a2 === a3 || a2 === a4 || a3 === a4) {
       a1 = rand(1, 12) * rand(1, 12);
       a2 = rand(1, 12) * rand(1, 12);
       a3 = rand(1, 12) * rand(1, 12);
@@ -124,10 +134,11 @@ function generateNewAnswers() {
 
   var rightAnswer = rand(1, 4);
   var answers = getAnswers();
-  a.a1.text = rightAnswer == 1 ? q.answer : answers[0];
-  a.a2.text = rightAnswer == 2 ? q.answer : answers[1];
-  a.a3.text = rightAnswer == 3 ? q.answer : answers[2];
-  a.a4.text = rightAnswer == 4 ? q.answer : answers[3];
+  var answer = q[0].answer;
+  a.a1.text = rightAnswer == 1 ? answer : answers[0];
+  a.a2.text = rightAnswer == 2 ? answer : answers[1];
+  a.a3.text = rightAnswer == 3 ? answer : answers[2];
+  a.a4.text = rightAnswer == 4 ? answer : answers[3];
 
   a.a1.y = a.a2.y = a.a3.y = a.a4.y = canvas.height - fontSize - 10;
   a.a1.x = canvas.width * 0.1;
@@ -144,17 +155,19 @@ function generateNewAnswers() {
 
 function renderQuestion() {
   verbose('renderQuestion');
-  if (q.y < canvas.height - fontSize) {
-    q.y += velocity;
-  } else {
-    q.complete = true;
-  }
-  context.fillText(q.text, q.x, q.y);
+  q.forEach(x => {
+    if (x.y < canvas.height - fontSize) {
+      x.y += velocity;
+    } else {
+      x.complete = true;
+    }
+    context.fillText(x.text, x.x, x.y);
+  });
 }
 
 function renderAnswers() {
   verbose('renderAnswers');
-  
+
   //if any have dx or dy, they were clicked, so increase their x and y
   if (a.a1.dx) {
     a.a1.x += a.a1.dx;
@@ -182,31 +195,45 @@ function renderAnswers() {
 function checkIfQuestionIsAnswered() {
   verbose('checkIfQuestionIsAnswered');
   // if any answer has entered the question hit box, q is complete
-  if (q.y < a.a1.y + fontSize && q.y > a.a1.y - fontSize &&
-    a.a1.x > q.x - context.measureText(q.text).width / 2 &&
-    a.a1.x < q.x + context.measureText(q.text).width / 2) {
-    q.complete = true;
-  } else if (q.y < a.a2.y + fontSize && q.y > a.a2.y - fontSize &&
-    a.a2.x > q.x - context.measureText(q.text).width / 2 &&
-    a.a2.x < q.x + context.measureText(q.text).width / 2) {
-    q.complete = true;
-  } else if (q.y < a.a3.y + fontSize && q.y > a.a3.y - fontSize &&
-    a.a3.x > q.x - context.measureText(q.text).width / 2 &&
-    a.a3.x < q.x + context.measureText(q.text).width / 2) {
-    q.complete = true;
-  } else if (q.y < a.a4.y + fontSize && q.y > a.a4.y - fontSize &&
-    a.a4.x > q.x - context.measureText(q.text).width / 2 &&
-    a.a4.x < q.x + context.measureText(q.text).width / 2) {
-    q.complete = true;
+  var answer;
+  if (q[0].y < a.a1.y + fontSize && q[0].y > a.a1.y - fontSize &&
+    a.a1.x > q[0].x - context.measureText(q[0].text).width / 2 &&
+    a.a1.x < q[0].x + context.measureText(q[0].text).width / 2) {
+    q[0].complete = true;
+    answer = a.a1.text;
+  } else if (q[0].y < a.a2.y + fontSize && q[0].y > a.a2.y - fontSize &&
+    a.a2.x > q[0].x - context.measureText(q[0].text).width / 2 &&
+    a.a2.x < q[0].x + context.measureText(q[0].text).width / 2) {
+    q[0].complete = true;
+    answer = a.a2.text;
+  } else if (q[0].y < a.a3.y + fontSize && q[0].y > a.a3.y - fontSize &&
+    a.a3.x > q[0].x - context.measureText(q[0].text).width / 2 &&
+    a.a3.x < q[0].x + context.measureText(q[0].text).width / 2) {
+    q[0].complete = true;
+    answer = a.a3.text;
+  } else if (q[0].y < a.a4.y + fontSize && q[0].y > a.a4.y - fontSize &&
+    a.a4.x > q[0].x - context.measureText(q[0].text).width / 2 &&
+    a.a4.x < q[0].x + context.measureText(q[0].text).width / 2) {
+    q[0].complete = true;
+    answer = a.a4.text;
   }
 
-  if (q.complete) {
+  if (q[0].complete) {
+    log('question was answered');
     // add a bunch of explosions
     for (let i = 0; i < 10; i++) {
-      var x = q.x + rand(-10, 10);
-      var y = q.y + rand(-10, 10);
+      var x = q[0].x + rand(-10, 10);
+      var y = q[0].y + rand(-10, 10);
       addExplosion(x, y);
     }
+    if (answer && answer == q[0].answer) {
+      score += 2;
+    } else {
+      score -= 1;
+    }
+    
+    removeQuestion();
+    generateNewAnswers();
   }
 }
 
@@ -219,6 +246,14 @@ function renderTimer() {
     timer.text = Math.round(timer.timeRemaining) + ' seconds remaining';
   }
   context.fillText(timer.text, timer.x, timer.y);
+}
+
+function renderScore() {
+  verbose('renderScore');
+  score ??= 0;
+  var x = canvas.width - context.measureText('Score: ' + score).width;
+  var y = fontSize;
+  context.fillText('Score: ' + score, x, y);
 }
 
 function renderExplosions() {
@@ -262,19 +297,19 @@ function removeExplosion() {
   explosions.shift();
 }
 
-function qOnClicked(obj) {
-  log('question was clicked');
-  q.wasClicked = !q.wasClicked;
-};
+function removeQuestion() {
+  log('removeQuestion');
+  q.shift();
+}
 
 function aOnClicked(obj) {
   log('answer ' + obj.text + ' was clicked');
-  if (obj.text == q.answer) {
-    //figure out where the question is at and move the answer there
-    obj.dx = (q.x - obj.x ) / 100;
-    var yBuffer = canvas.height * .1
-    obj.dy = (q.y - obj.y + yBuffer) / 100;
-  }
+  //figure out where the question is at and move the answer there
+  obj.dx = (q[0].x - obj.x) / 100;
+  var yBuffer = canvas.height * .1
+  obj.dy = (q[0].y - obj.y + yBuffer) / 100;
+
+  generateNewQuestion();
 }
 
 function timerOnClicked(obj) {
