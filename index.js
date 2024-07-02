@@ -32,7 +32,7 @@ canvas.addEventListener('click', function (event) {
       y >= obj.y - fontSize - 10 && y <= obj.y + 10) {
       objectWasClicked = true;
       if (obj.onClicked) {
-        obj.onClicked();
+        obj.onClicked(obj);
       }
     }
   });
@@ -48,7 +48,7 @@ function init() {
   velocity = canvas.height / 1000;
   context = canvas.getContext('2d');
   
-  fontSize = Math.floor(canvas.height / 40);
+  fontSize = Math.floor(canvas.height / 20);
   font = fontSize + 'px Arial';
   context.font = font;
   context.fillStyle = 'white';
@@ -70,6 +70,9 @@ function draw() {
 
   renderQuestion();
   renderAnswers();
+
+  checkIfQuestionIsAnswered();
+
   renderTimer();
   renderExplosions();
 }
@@ -107,45 +110,104 @@ function generateNewAnswers() {
   a.a2 = {};
   a.a3 = {};
   a.a4 = {};
-  var rightAnswer = rand(1, 4);
-  a.a1.text = rightAnswer == 1 ? q.answer : rand(1, 12) * rand(1, 12);
-  a.a2.text = rightAnswer == 2 ? q.answer : rand(1, 12) * rand(1, 12);
-  a.a3.text = rightAnswer == 3 ? q.answer : rand(1, 12) * rand(1, 12);
-  a.a4.text = rightAnswer == 4 ? q.answer : rand(1, 12) * rand(1, 12);
 
-  // make sure none of the answers are duplicates
-  while (a.a2 === a.a1 || a.a2 === a.a3 || a.a2 === a.a4) {
-    a.a2 = rand(1, 12) * rand(1, 12);
+  function getAnswers() {
+    var a1, a2, a3, a4;
+    while (a1 === a2 || a1 === a3 || a2 === a3 || a1 === a4 || a2 === a4 || a3 === a4) {
+      a1 = rand(1, 12) * rand(1, 12);
+      a2 = rand(1, 12) * rand(1, 12);
+      a3 = rand(1, 12) * rand(1, 12);
+      a4 = rand(1, 12) * rand(1, 12);
+    }
+    return [a1, a2, a3, a4];
   }
-  while (a.a3 === a.a1 || a.a3 === a.a2 || a.a3 === a.a4) {
-    a.a3 = rand(1, 12) * rand(1, 12);
-  }
-  while (a.a4 === a.a1 || a.a4 === a.a2 || a.a4 === a.a3) {
-    a.a4 = rand(1, 12) * rand(1, 12);
-  }
+
+  var rightAnswer = rand(1, 4);
+  var answers = getAnswers();
+  a.a1.text = rightAnswer == 1 ? q.answer : answers[0];
+  a.a2.text = rightAnswer == 2 ? q.answer : answers[1];
+  a.a3.text = rightAnswer == 3 ? q.answer : answers[2];
+  a.a4.text = rightAnswer == 4 ? q.answer : answers[3];
 
   a.a1.y = a.a2.y = a.a3.y = a.a4.y = canvas.height - fontSize - 10;
   a.a1.x = canvas.width * 0.1;
   a.a2.x = canvas.width * 0.3;
   a.a3.x = canvas.width * 0.5;
   a.a4.x = canvas.width * 0.7;
+
+  a.a1.onClicked = a.a2.onClicked = a.a3.onClicked = a.a4.onClicked = aOnClicked;
+  clickableTextObjects.push(a.a1);
+  clickableTextObjects.push(a.a2);
+  clickableTextObjects.push(a.a3);
+  clickableTextObjects.push(a.a4);
 }
 
 function renderQuestion() {
   verbose('renderQuestion');
-  if (!q.wasClicked && q.y < canvas.height - fontSize) {
+  if (q.y < canvas.height - fontSize) {
     q.y += velocity;
+  } else {
+    q.complete = true;
   }
   context.fillText(q.text, q.x, q.y);
 }
 
 function renderAnswers() {
   verbose('renderAnswers');
-  // I want to research what other parameters I can pass to fillText, particularly color
+  
+  //if any have dx or dy, they were clicked, so increase their x and y
+  if (a.a1.dx) {
+    a.a1.x += a.a1.dx;
+    a.a1.y += a.a1.dy;
+  }
+  if (a.a2.dx) {
+    a.a2.x += a.a2.dx;
+    a.a2.y += a.a2.dy;
+  }
+  if (a.a3.dx) {
+    a.a3.x += a.a3.dx;
+    a.a3.y += a.a3.dy;
+  }
+  if (a.a4.dx) {
+    a.a4.x += a.a4.dx;
+    a.a4.y += a.a4.dy;
+  }
+
   context.fillText(a.a1.text, a.a1.x, a.a1.y);
   context.fillText(a.a2.text, a.a2.x, a.a2.y);
   context.fillText(a.a3.text, a.a3.x, a.a3.y);
   context.fillText(a.a4.text, a.a4.x, a.a4.y);
+}
+
+function checkIfQuestionIsAnswered() {
+  verbose('checkIfQuestionIsAnswered');
+  // if any answer has entered the question hit box, q is complete
+  if (q.y < a.a1.y + fontSize && q.y > a.a1.y - fontSize &&
+    a.a1.x > q.x - context.measureText(q.text).width / 2 &&
+    a.a1.x < q.x + context.measureText(q.text).width / 2) {
+    q.complete = true;
+  } else if (q.y < a.a2.y + fontSize && q.y > a.a2.y - fontSize &&
+    a.a2.x > q.x - context.measureText(q.text).width / 2 &&
+    a.a2.x < q.x + context.measureText(q.text).width / 2) {
+    q.complete = true;
+  } else if (q.y < a.a3.y + fontSize && q.y > a.a3.y - fontSize &&
+    a.a3.x > q.x - context.measureText(q.text).width / 2 &&
+    a.a3.x < q.x + context.measureText(q.text).width / 2) {
+    q.complete = true;
+  } else if (q.y < a.a4.y + fontSize && q.y > a.a4.y - fontSize &&
+    a.a4.x > q.x - context.measureText(q.text).width / 2 &&
+    a.a4.x < q.x + context.measureText(q.text).width / 2) {
+    q.complete = true;
+  }
+
+  if (q.complete) {
+    // add a bunch of explosions
+    for (let i = 0; i < 10; i++) {
+      var x = q.x + rand(-10, 10);
+      var y = q.y + rand(-10, 10);
+      addExplosion(x, y);
+    }
+  }
 }
 
 function renderTimer() {
@@ -200,16 +262,22 @@ function removeExplosion() {
   explosions.shift();
 }
 
-function qOnClicked() {
+function qOnClicked(obj) {
   log('question was clicked');
   q.wasClicked = !q.wasClicked;
 };
 
-function aOnClicked() {
-  log('answer was clicked');
+function aOnClicked(obj) {
+  log('answer ' + obj.text + ' was clicked');
+  if (obj.text == q.answer) {
+    //figure out where the question is at and move the answer there
+    obj.dx = (q.x - obj.x ) / 100;
+    var yBuffer = canvas.height * .1
+    obj.dy = (q.y - obj.y + yBuffer) / 100;
+  }
 }
 
-function timerOnClicked() {
+function timerOnClicked(obj) {
   log('timer was clicked');
   startTime += 1000;
 }
