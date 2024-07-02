@@ -8,6 +8,7 @@ var velocity,
   startTime,
   wasClicked,
   timer,
+  a,
   q;
 var clickableTextObjects = [];
 var explosions = [];
@@ -46,18 +47,11 @@ animate();
 function init() {
   velocity = canvas.height / 1000;
   context = canvas.getContext('2d');
-  fontSize = 20;
+  
+  fontSize = Math.floor(canvas.height / 40);
   font = fontSize + 'px Arial';
   context.font = font;
   context.fillStyle = 'white';
-  
-  q = {};
-  q.x = canvas.width / 2 - context.measureText(q.text).width / 2;
-  q.y = fontSize;
-  q.text = 'math question will go here';
-  q.wasClicked = false;
-  q.onClicked = qOnClicked;
-  clickableTextObjects.push(q);
 
   startTime = Date.now();
   timer = {};
@@ -67,27 +61,95 @@ function init() {
   timer.onClicked = timerOnClicked;
   clickableTextObjects.push(timer);
 }
-
 function draw() {
+  verbose('draw');
+  if (!q || q.complete) {
+    generateNewQuestion();
+    generateNewAnswers();
+  }
+
   renderQuestion();
+  renderAnswers();
   renderTimer();
   renderExplosions();
 }
 
 function animate() {
+  verbose('animate');
   context.clearRect(0, 0, canvas.width, canvas.height);
   draw();
   requestAnimationFrame(animate);
 }
 
+function rand(min = 1, max = 10) {
+  verbose('rand');
+  return Math.floor(Math.random() * max) + min;
+}
+
+function generateNewQuestion() {
+  log('generating a new question');
+  q = {};
+  q.x = canvas.width / 2 - context.measureText(q.text).width / 2;
+  q.y = fontSize;
+  q.term1 = rand(1, 12);
+  q.term2 = rand(1, 12);
+  q.answer = q.term1 * q.term2;
+  q.text = q.term1 + ' * ' + q.term2 + ' = ?';
+  q.complete = false;
+  q.onClicked = qOnClicked;
+  clickableTextObjects.push(q);
+}
+
+function generateNewAnswers() {
+  log('generating new answers');
+  a = {};
+  a.a1 = {};
+  a.a2 = {};
+  a.a3 = {};
+  a.a4 = {};
+  var rightAnswer = rand(1, 4);
+  a.a1.text = rightAnswer == 1 ? q.answer : rand(1, 12) * rand(1, 12);
+  a.a2.text = rightAnswer == 2 ? q.answer : rand(1, 12) * rand(1, 12);
+  a.a3.text = rightAnswer == 3 ? q.answer : rand(1, 12) * rand(1, 12);
+  a.a4.text = rightAnswer == 4 ? q.answer : rand(1, 12) * rand(1, 12);
+
+  // make sure none of the answers are duplicates
+  while (a.a2 === a.a1 || a.a2 === a.a3 || a.a2 === a.a4) {
+    a.a2 = rand(1, 12) * rand(1, 12);
+  }
+  while (a.a3 === a.a1 || a.a3 === a.a2 || a.a3 === a.a4) {
+    a.a3 = rand(1, 12) * rand(1, 12);
+  }
+  while (a.a4 === a.a1 || a.a4 === a.a2 || a.a4 === a.a3) {
+    a.a4 = rand(1, 12) * rand(1, 12);
+  }
+
+  a.a1.y = a.a2.y = a.a3.y = a.a4.y = canvas.height - fontSize - 10;
+  a.a1.x = canvas.width * 0.1;
+  a.a2.x = canvas.width * 0.3;
+  a.a3.x = canvas.width * 0.5;
+  a.a4.x = canvas.width * 0.7;
+}
+
 function renderQuestion() {
+  verbose('renderQuestion');
   if (!q.wasClicked && q.y < canvas.height - fontSize) {
     q.y += velocity;
   }
   context.fillText(q.text, q.x, q.y);
 }
 
+function renderAnswers() {
+  verbose('renderAnswers');
+  // I want to research what other parameters I can pass to fillText, particularly color
+  context.fillText(a.a1.text, a.a1.x, a.a1.y);
+  context.fillText(a.a2.text, a.a2.x, a.a2.y);
+  context.fillText(a.a3.text, a.a3.x, a.a3.y);
+  context.fillText(a.a4.text, a.a4.x, a.a4.y);
+}
+
 function renderTimer() {
+  verbose('renderTimer');
   timer.timeRemaining = 120 - (Date.now() - startTime) / 1000;
   if (timer.timeRemaining < 1) {
     timer.text = 'Time is up!';
@@ -98,6 +160,7 @@ function renderTimer() {
 }
 
 function renderExplosions() {
+  verbose('renderExplosions');
   if (!explosions) {
     return;
   }
@@ -109,17 +172,18 @@ function renderExplosions() {
       removeExplosion();
       return;
     } else {
-        explosion.points.forEach(point => {
-          point.x += point.dx;
-          point.y += point.dy;
-          context.fillRect(point.x, point.y, 2, 2);
-        });
-      }
+      explosion.points.forEach(point => {
+        point.x += point.dx;
+        point.y += point.dy;
+        context.fillRect(point.x, point.y, 2, 2);
+      });
+    }
   });
 }
 
 function addExplosion(x, y) {
-  var explosion = {x: x, y: y};
+  log('addExplosion');
+  var explosion = { x: x, y: y };
   explosion.startTime = Date.now();
   explosion.points = [];
   var rand = Math.floor(Math.random() * 100);
@@ -132,13 +196,30 @@ function addExplosion(x, y) {
 }
 
 function removeExplosion() {
+  log('removeExplosion');
   explosions.shift();
 }
 
 function qOnClicked() {
+  log('question was clicked');
   q.wasClicked = !q.wasClicked;
 };
 
+function aOnClicked() {
+  log('answer was clicked');
+}
+
 function timerOnClicked() {
+  log('timer was clicked');
   startTime += 1000;
+}
+
+function log(msg) {
+  console.log(msg);
+}
+
+function verbose(msg) {
+  if (this.logVerbose) {
+    console.log(msg);
+  }
 }
