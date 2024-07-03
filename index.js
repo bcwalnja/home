@@ -14,7 +14,10 @@ var qVelocity,
   missiles,
   padding,
   explosionDuration,
-  xOptions,
+  term1Min,
+  term1Max,
+  term2Min,
+  term2Max,
   a,
   q;
 var clickableTextObjects = [];
@@ -52,23 +55,18 @@ canvas.addEventListener('click', function (event) {
 init();
 animate();
 
-// TODO: why is the answer generation messed up?
-// If a second missile is launched before the first one completes, 
-// no new question is generated onClick, and the answers that are
-// available don't include a correct answer for the question that
-// gets generated.
-
 function init() {
   qVelocity = canvas.height / 1000;
   context = canvas.getContext('2d');
   context.lineWidth = 2;
   context.strokeStyle = 'white';
-  explosionDuration = 15000;
-  xOptions = [
-    canvas.width * 0.1, 
-    canvas.width * 0.3, 
-    canvas.width * 0.5, canvas.width * 0.7
-  ];
+  explosionDuration = 5000;
+
+  // TODO: make these configurable
+  term1Min = 1;
+  term1Max = 12;
+  term2Min = 1;
+  term2Max = 12;
 
   fontSize = Math.floor(canvas.height / 20);
   font = fontSize + 'px Arial';
@@ -79,7 +77,7 @@ function init() {
 
   startTime = Date.now();
   timer = {};
-  timer.x = 0;
+  timer.x = 10;
   timer.y = fontSize;
   timer.text = '120 seconds remaining';
   timer.onClicked = timerOnClicked;
@@ -88,6 +86,7 @@ function init() {
   generateNewQuestion();
   generateNewAnswers();
 }
+
 function draw() {
   verbose('draw');
   if (!q || !q.length) {
@@ -129,21 +128,16 @@ function generateNewQuestion() {
     return;
   }
 
-
   q ??= [];
-  var newQ = {};
-  // get the current q[last] x position, and
-  // set newQ x position as the next one in the array
-  var lastQ = q[q.length - 1]?.x || 0;
-  var lastX = xOptions.indexOf(lastQ);
-  newQ.x = xOptions[(lastX + 1) % xOptions.length];
-  newQ.y = fontSize;
-  newQ.term1 = rand(1, 12);
-  newQ.term2 = rand(1, 12);
-  newQ.answer = newQ.term1 * newQ.term2;
-  newQ.text = newQ.term1 + ' * ' + newQ.term2 + ' = ?';
-  newQ.complete = false;
-  q.push(newQ);
+  var q1 = {};
+  q1.x = canvas.width / 2 - context.measureText(q1.text).width / 2;
+  q1.y = fontSize;
+  q1.term1 = rand(term1Min, term1Max);
+  q1.term2 = rand(term2Min, term2Max);
+  q1.answer = q1.term1 * q1.term2;
+  q1.text = q1.term1 + ' * ' + q1.term2 + ' = ?';
+  q1.complete = false;
+  q.push(q1);
 }
 
 function generateNewAnswers() {
@@ -201,19 +195,17 @@ function renderQuestion() {
     if (x.y < canvas.height - fontSize * 2 - padding) {
       x.y += qVelocity;
     } else {
-      // question has reached the bottom of the screen
+      // question reached the bottom of the screen
       x.complete = true;
     }
 
     if (i == (missiles?.length || 0)) {
-      //draw a box around the focused question (the one the answers are for)
+      //draw a box around the question
       var left = x.x - padding / 2;
       var top = x.y - fontSize - padding / 4;
       var width = context.measureText(x.text).width + padding;
       var height = fontSize + padding;
-      context.save();
       context.strokeRect(left, top, width, height);
-      context.restore();
     }
 
     context.fillText(x.text, x.x, x.y);
@@ -222,6 +214,8 @@ function renderQuestion() {
 
 function renderAnswers() {
   verbose('renderAnswers');
+
+  //if any have dx or dy, they were clicked, so increase their x and y
   a.forEach(x => {
     if (x.dx) {
       x.x += x.dx;
@@ -268,22 +262,21 @@ function checkIfQuestionIsAnswered() {
   // if any answer has entered the question hit box, q is complete
   var answer;
   missiles?.forEach(missile => {
-    q.forEach(x => {
-      if (areOverlapping(missile, x)) {
-        x.complete = true;
-        answer = missile.text;
-      }
-    });
+    if (areOverlapping(missile, q[0])) {
+      q[0].complete = true;
+      answer = missile.text;
+    }
   });
 
   if (q[0].complete) {
     log('question was answered');
     // remove the missile from the array
     missiles.shift();
+    var z = context.measureText(q[0].text).width;
     // add a bunch of explosions
-    for (let i = 0; i < 10; i++) {
-      var x = q[0].x + rand(-20, 20);
-      var y = q[0].y + rand(-20, 20);
+    for (let i = 0; i < 20; i++) {
+      var x = q[0].x + rand(0, z);
+      var y = q[0].y + rand(0 - fontSize, 0);
       addExplosion(x, y);
     }
     if (answer && answer == q[0].answer) {
@@ -359,9 +352,9 @@ function addExplosion(x, y) {
 
   function r() { return (Math.random() - 0.5) * 2 };
 
-  for (let i = 0; i < rand(15, 30); i++) {
-    var dx = Math.exp(r()) * r();
-    var dy = Math.exp(r()) * r();
+  for (let i = 0; i < 25; i++) {
+    var dx = Math.exp(r()) * r() * 2;
+    var dy = Math.exp(r()) * r() * 2;
     explosion.points.push({ x: x, y: y, dx: dx, dy: dy })
   }
   explosions.push(explosion);
