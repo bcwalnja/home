@@ -1,3 +1,4 @@
+var logVerbose = false;
 var canvas = document.getElementById('container');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -13,11 +14,14 @@ var qVelocity,
   missiles,
   padding,
   explosionDuration,
+  term1Min,
+  term1Max,
+  term2Min,
+  term2Max,
   a,
   q;
 var clickableTextObjects = [];
 var explosions = [];
-var logVerbose = true;
 // attach a listener to the window resize event
 // to keep the canvas sized to the window
 window.addEventListener('resize', function () {
@@ -51,18 +55,18 @@ canvas.addEventListener('click', function (event) {
 init();
 animate();
 
-// TODO: why is the answer generation messed up?
-// If a second missile is launched before the first one completes, 
-// no new question is generated onClick, and the answers that are
-// available don't include a correct answer for the question that
-// gets generated.
-
 function init() {
   qVelocity = canvas.height / 1000;
   context = canvas.getContext('2d');
   context.lineWidth = 2;
   context.strokeStyle = 'white';
-  explosionDuration = 15000;
+  explosionDuration = 5000;
+
+  // TODO: make these configurable
+  term1Min = 1;
+  term1Max = 12;
+  term2Min = 1;
+  term2Max = 12;
 
   fontSize = Math.floor(canvas.height / 20);
   font = fontSize + 'px Arial';
@@ -73,7 +77,7 @@ function init() {
 
   startTime = Date.now();
   timer = {};
-  timer.x = 0;
+  timer.x = 10;
   timer.y = fontSize;
   timer.text = '120 seconds remaining';
   timer.onClicked = timerOnClicked;
@@ -82,6 +86,7 @@ function init() {
   generateNewQuestion();
   generateNewAnswers();
 }
+
 function draw() {
   verbose('draw');
   if (!q || !q.length) {
@@ -127,8 +132,8 @@ function generateNewQuestion() {
   var q1 = {};
   q1.x = canvas.width / 2 - context.measureText(q1.text).width / 2;
   q1.y = fontSize;
-  q1.term1 = rand(1, 12);
-  q1.term2 = rand(1, 12);
+  q1.term1 = rand(term1Min, term1Max);
+  q1.term2 = rand(term2Min, term2Max);
   q1.answer = q1.term1 * q1.term2;
   q1.text = q1.term1 + ' * ' + q1.term2 + ' = ?';
   q1.complete = false;
@@ -143,17 +148,17 @@ function generateNewAnswers() {
   var a3 = {};
   var a4 = {};
 
-  while (a1.text == a2.text
-    || a1.text == a3.text
-    || a1.text == a4.text
-    || a2.text == a3.text
-    || a2.text == a4.text
-    || a3.text == a4.text) {
-    a1.text = rand(1, 12) * rand(1, 12);
+  a1.text = rand(1, 12) * rand(1, 12);
+
+  do {
     a2.text = rand(1, 12) * rand(1, 12);
+  } while (a1.text == a2.text);
+  do {
     a3.text = rand(1, 12) * rand(1, 12);
+  } while (a1.text == a3.text || a2.text == a3.text);
+  do {
     a4.text = rand(1, 12) * rand(1, 12);
-  }
+  } while (a1.text == a4.text || a2.text == a4.text || a3.text == a4.text);
 
   a1.isAnAnswer = a2.isAnAnswer = a3.isAnAnswer = a4.isAnAnswer = true;
 
@@ -190,18 +195,17 @@ function renderQuestion() {
     if (x.y < canvas.height - fontSize * 2 - padding) {
       x.y += qVelocity;
     } else {
+      // question reached the bottom of the screen
       x.complete = true;
     }
 
     if (i == (missiles?.length || 0)) {
-      //draw a yellow box around the question
+      //draw a box around the question
       var left = x.x - padding / 2;
       var top = x.y - fontSize - padding / 4;
       var width = context.measureText(x.text).width + padding;
       var height = fontSize + padding;
-      context.save();
       context.strokeRect(left, top, width, height);
-      context.restore();
     }
 
     context.fillText(x.text, x.x, x.y);
@@ -268,10 +272,11 @@ function checkIfQuestionIsAnswered() {
     log('question was answered');
     // remove the missile from the array
     missiles.shift();
+    var z = context.measureText(q[0].text).width;
     // add a bunch of explosions
     for (let i = 0; i < 20; i++) {
-      var x = q[0].x + rand(-10, 10);
-      var y = q[0].y + rand(-10, 10);
+      var x = q[0].x + rand(0, z);
+      var y = q[0].y + rand(0 - fontSize, 0);
       addExplosion(x, y);
     }
     if (answer && answer == q[0].answer) {
@@ -347,9 +352,9 @@ function addExplosion(x, y) {
 
   function r() { return (Math.random() - 0.5) * 2 };
 
-  for (let i = 0; i < rand(25, 50); i++) {
-    var dx = Math.exp(r()) * r();
-    var dy = Math.exp(r()) * r();
+  for (let i = 0; i < 25; i++) {
+    var dx = Math.exp(r()) * r() * 2;
+    var dy = Math.exp(r()) * r() * 2;
     explosion.points.push({ x: x, y: y, dx: dx, dy: dy })
   }
   explosions.push(explosion);
