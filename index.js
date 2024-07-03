@@ -78,7 +78,7 @@ function draw() {
   renderQuestion();
   renderAnswers();
   renderMissiles();
-  
+
   renderScore();
   renderTimer();
   renderExplosions();
@@ -118,30 +118,23 @@ function generateNewQuestion() {
 
 function generateNewAnswers() {
   log('generating new answers');
-
+  a ??= [];
   var a1 = {};
   var a2 = {};
   var a3 = {};
   var a4 = {};
 
-  function getAnswers() {
-    var a1, a2, a3, a4;
-    while (a1 === a2 || a1 === a3 || a1 === a4 || a2 === a3 || a2 === a4 || a3 === a4) {
-      a1 = rand(1, 12) * rand(1, 12);
-      a2 = rand(1, 12) * rand(1, 12);
-      a3 = rand(1, 12) * rand(1, 12);
-      a4 = rand(1, 12) * rand(1, 12);
-    }
-    return [a1, a2, a3, a4];
+  while (a1.text == a2.text
+    || a1.text == a3.text
+    || a1.text == a4.text
+    || a2.text == a3.text
+    || a2.text == a4.text
+    || a3.text == a4.text) {
+    a1.text = rand(1, 12) * rand(1, 12);
+    a2.text = rand(1, 12) * rand(1, 12);
+    a3.text = rand(1, 12) * rand(1, 12);
+    a4.text = rand(1, 12) * rand(1, 12);
   }
-
-  var rightAnswer = rand(1, 4);
-  var answers = getAnswers();
-  var answer = q[0].answer;
-  a1.text = rightAnswer == 1 ? answer : answers[0];
-  a2.text = rightAnswer == 2 ? answer : answers[1];
-  a3.text = rightAnswer == 3 ? answer : answers[2];
-  a4.text = rightAnswer == 4 ? answer : answers[3];
 
   a1.y = a2.y = a3.y = a4.y = canvas.height - fontSize - 10;
   a1.x = canvas.width * 0.1;
@@ -150,10 +143,16 @@ function generateNewAnswers() {
   a4.x = canvas.width * 0.7;
 
   a1.onClicked = a2.onClicked = a3.onClicked = a4.onClicked = aOnClicked;
-  a.push(a1);
-  a.push(a2);
-  a.push(a3);
-  a.push(a4);
+  clickableTextObjects.push(a1);
+  clickableTextObjects.push(a2);
+  clickableTextObjects.push(a3);
+  clickableTextObjects.push(a4);
+
+  a = [a1, a2, a3, a4];
+
+  if (!a.some(x => x.text == q[0].answer)) {
+    a[rand(0, 4)].text = q[0].answer;
+  }
 }
 
 function renderQuestion() {
@@ -199,27 +198,21 @@ function checkIfQuestionIsAnswered() {
   verbose('checkIfQuestionIsAnswered');
   // if any answer has entered the question hit box, q is complete
   var answer;
-  if (q[0].y < a.a1.y + fontSize && q[0].y > a.a1.y - fontSize &&
-    a.a1.x > q[0].x - context.measureText(q[0].text).width / 2 &&
-    a.a1.x < q[0].x + context.measureText(q[0].text).width / 2) {
-    q[0].complete = true;
-    answer = a.a1.text;
-  } else if (q[0].y < a.a2.y + fontSize && q[0].y > a.a2.y - fontSize &&
-    a.a2.x > q[0].x - context.measureText(q[0].text).width / 2 &&
-    a.a2.x < q[0].x + context.measureText(q[0].text).width / 2) {
-    q[0].complete = true;
-    answer = a.a2.text;
-  } else if (q[0].y < a.a3.y + fontSize && q[0].y > a.a3.y - fontSize &&
-    a.a3.x > q[0].x - context.measureText(q[0].text).width / 2 &&
-    a.a3.x < q[0].x + context.measureText(q[0].text).width / 2) {
-    q[0].complete = true;
-    answer = a.a3.text;
-  } else if (q[0].y < a.a4.y + fontSize && q[0].y > a.a4.y - fontSize &&
-    a.a4.x > q[0].x - context.measureText(q[0].text).width / 2 &&
-    a.a4.x < q[0].x + context.measureText(q[0].text).width / 2) {
-    q[0].complete = true;
-    answer = a.a4.text;
-  }
+  missiles?.forEach(missile => {
+    var top = missile.y;
+    var bottom = missile.y + fontSize;
+    var left = missile.x;
+    var right = missile.x + context.measureText(missile.text).width;
+
+    if (q[0].y < bottom && q[0].y > top &&
+      q[0].x > left && q[0].x < right) {
+
+      q[0].complete = true;
+      answer = missile.text;
+      // remove the missile from the array
+      missiles.shift();
+    }
+  });
 
   if (q[0].complete) {
     log('question was answered');
@@ -234,10 +227,8 @@ function checkIfQuestionIsAnswered() {
     } else {
       score -= 1;
     }
-    
+
     removeQuestion();
-    generateNewQuestion();
-    generateNewAnswers();
   }
 }
 
@@ -289,7 +280,7 @@ function addExplosion(x, y) {
   explosion.points = [];
 
   function r() { return (Math.random() - 0.5) * 2 };
-  
+
   for (let i = 0; i < rand(25, 50); i++) {
     var dx = Math.exp(r()) * r();
     var dy = Math.exp(r()) * r();
@@ -310,12 +301,20 @@ function removeQuestion() {
 
 function aOnClicked(obj) {
   log('answer ' + obj.text + ' was clicked');
-  //figure out where the question is at and move the answer there
-  obj.dx = (q[0].x - obj.x) / 100;
+  var missile = {};
+  missile.text = obj.text;
+  missile.x = obj.x;
+  missile.y = obj.y;
+  missile.dx = (q[0].x - obj.x) / 100;
   var yBuffer = canvas.height * .1
-  obj.dy = (q[0].y - obj.y + yBuffer) / 100;
+  missile.dy = (q[0].y - obj.y + yBuffer) / 100;
+
+  // remove the answer from answers and add it to missiles
+  missiles ??= [];
+  missiles.push(missile);
 
   generateNewQuestion();
+  generateNewAnswers();
 }
 
 function timerOnClicked(obj) {
