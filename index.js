@@ -9,6 +9,7 @@ var velocity,
   wasClicked,
   score,
   timer,
+  missiles,
   a,
   q;
 var clickableTextObjects = [];
@@ -54,6 +55,8 @@ function init() {
   context.font = font;
   context.fillStyle = 'white';
 
+  a = [];
+
   startTime = Date.now();
   timer = {};
   timer.x = 0;
@@ -74,6 +77,7 @@ function draw() {
 
   renderQuestion();
   renderAnswers();
+  renderMissiles();
   
   renderScore();
   renderTimer();
@@ -115,11 +119,10 @@ function generateNewQuestion() {
 function generateNewAnswers() {
   log('generating new answers');
 
-  a = {};
-  a.a1 = {};
-  a.a2 = {};
-  a.a3 = {};
-  a.a4 = {};
+  var a1 = {};
+  var a2 = {};
+  var a3 = {};
+  var a4 = {};
 
   function getAnswers() {
     var a1, a2, a3, a4;
@@ -135,22 +138,22 @@ function generateNewAnswers() {
   var rightAnswer = rand(1, 4);
   var answers = getAnswers();
   var answer = q[0].answer;
-  a.a1.text = rightAnswer == 1 ? answer : answers[0];
-  a.a2.text = rightAnswer == 2 ? answer : answers[1];
-  a.a3.text = rightAnswer == 3 ? answer : answers[2];
-  a.a4.text = rightAnswer == 4 ? answer : answers[3];
+  a1.text = rightAnswer == 1 ? answer : answers[0];
+  a2.text = rightAnswer == 2 ? answer : answers[1];
+  a3.text = rightAnswer == 3 ? answer : answers[2];
+  a4.text = rightAnswer == 4 ? answer : answers[3];
 
-  a.a1.y = a.a2.y = a.a3.y = a.a4.y = canvas.height - fontSize - 10;
-  a.a1.x = canvas.width * 0.1;
-  a.a2.x = canvas.width * 0.3;
-  a.a3.x = canvas.width * 0.5;
-  a.a4.x = canvas.width * 0.7;
+  a1.y = a2.y = a3.y = a4.y = canvas.height - fontSize - 10;
+  a1.x = canvas.width * 0.1;
+  a2.x = canvas.width * 0.3;
+  a3.x = canvas.width * 0.5;
+  a4.x = canvas.width * 0.7;
 
-  a.a1.onClicked = a.a2.onClicked = a.a3.onClicked = a.a4.onClicked = aOnClicked;
-  clickableTextObjects.push(a.a1);
-  clickableTextObjects.push(a.a2);
-  clickableTextObjects.push(a.a3);
-  clickableTextObjects.push(a.a4);
+  a1.onClicked = a2.onClicked = a3.onClicked = a4.onClicked = aOnClicked;
+  a.push(a1);
+  a.push(a2);
+  a.push(a3);
+  a.push(a4);
 }
 
 function renderQuestion() {
@@ -169,27 +172,27 @@ function renderAnswers() {
   verbose('renderAnswers');
 
   //if any have dx or dy, they were clicked, so increase their x and y
-  if (a.a1.dx) {
-    a.a1.x += a.a1.dx;
-    a.a1.y += a.a1.dy;
-  }
-  if (a.a2.dx) {
-    a.a2.x += a.a2.dx;
-    a.a2.y += a.a2.dy;
-  }
-  if (a.a3.dx) {
-    a.a3.x += a.a3.dx;
-    a.a3.y += a.a3.dy;
-  }
-  if (a.a4.dx) {
-    a.a4.x += a.a4.dx;
-    a.a4.y += a.a4.dy;
-  }
+  a.forEach(x => {
+    if (x.dx) {
+      x.x += x.dx;
+      x.y += x.dy;
+    }
+    context.fillText(x.text, x.x, x.y);
+  });
+}
 
-  context.fillText(a.a1.text, a.a1.x, a.a1.y);
-  context.fillText(a.a2.text, a.a2.x, a.a2.y);
-  context.fillText(a.a3.text, a.a3.x, a.a3.y);
-  context.fillText(a.a4.text, a.a4.x, a.a4.y);
+function renderMissiles() {
+  verbose('renderMissiles');
+  if (!missiles || !missiles.length) {
+    return;
+  }
+  missiles.forEach(x => {
+    if (x.dx) {
+      x.x += x.dx;
+      x.y += x.dy;
+    }
+    context.fillText(x.text, x.x, x.y);
+  });
 }
 
 function checkIfQuestionIsAnswered() {
