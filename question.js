@@ -17,8 +17,8 @@ function generateNewQuestion(missileCount) {
   var q1 = {};
   q1.x = canvas.width / 2 - context.measureText(q1.text).width / 2;
   q1.y = fontSize;
-  q1.term1 = rand(term1Min, term1Max);
-  q1.term2 = rand(term2Min, term2Max);
+  q1.term1 = rand(terms.term1.min, terms.term1.max);
+  q1.term2 = rand(terms.term2.min, terms.term2.max);
   q1.answer = q1.term1 * q1.term2;
   q1.text = q1.term1 + ' * ' + q1.term2 + ' = ?';
   q1.complete = false;

@@ -1,8 +1,8 @@
-var canvas = document.getElementById('container');
+let canvas = document.getElementById('container');
 canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.height = window.innerHeight * .9;
 canvas.style.backgroundColor = 'black';
-var qVelocity,
+let qVelocity,
   context,
   font,
   fontSize,
@@ -13,58 +13,37 @@ var qVelocity,
   missiles,
   padding,
   explosionDuration,
-  term1Min,
-  term1Max,
-  term2Min,
-  term2Max,
   a;
-var clickableTextObjects = [];
-var explosions = [];
+let clickableTextObjects;
+let explosions;
+let gameRunning = false;
 // attach a listener to the window resize event
 // to keep the canvas sized to the window
-window.addEventListener('resize', function () {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  boundaryX = canvas.width;
-  boundaryY = canvas.height;
-  context.font = font;
-  context.fillStyle = 'white';
-  context.lineWidth = 2;
-  context.strokeStyle = 'white';
-});
 
-canvas.addEventListener('click', function (event) {
-  var x = event.clientX;
-  var y = event.clientY;
-  var objectWasClicked = false;
-  clickableTextObjects.forEach(function (obj) {
-    if (areOverlapping({ x: x, y: y }, obj)) {
-      objectWasClicked = true;
-      if (obj.onClicked) {
-        obj.onClicked(obj);
-      }
-    }
-  });
-  if (!objectWasClicked) {
-    addExplosion(x, y);
+function startGame() {
+  if (!gameRunning) {
+    init();
+    animate();
+    gameRunning = !gameRunning;
   }
-});
+}
 
-init();
-animate();
+document.getElementById('startButton').addEventListener('click', startGame);
 
 function init() {
+  //TODO: make this configurable as easy, medium, hard
   qVelocity = canvas.height / 1000;
+
+  addEvents();
+
+  canvas = document.getElementById('container');
+
+  clickableTextObjects = []
+  explosions = []
   context = canvas.getContext('2d');
   context.lineWidth = 2;
   context.strokeStyle = 'white';
   explosionDuration = 5000;
-
-  // TODO: make these configurable
-  term1Min = 1;
-  term1Max = 12;
-  term2Min = 1;
-  term2Max = 12;
 
   fontSize = Math.floor(canvas.height / 20);
   font = fontSize + 'px Arial';
@@ -102,10 +81,12 @@ function draw() {
 }
 
 function animate() {
+  while (gameRunning) {
   verbose('animate');
   context.clearRect(0, 0, canvas.width, canvas.height);
   draw();
-  requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
+  }
 }
 
 function timerOnClicked(obj) {

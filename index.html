@@ -5,18 +5,39 @@
 <head>
     <title>Nate's Page</title>
 </head>
-<style>
-    html {
-        font-size: 200%;
-    }
-</style>
 <body>
+
+    <style>
+        html {
+            font-size: 200%;
+            background-color: black;
+            color: white;
+        }
+        
+        input, button {
+            font-size: 100%;
+        }
+    </style>
+
+    <label for="term1min">Term 1 Min</label>
+    <input type="number" id="term1min" value="1" min="1" max="12">
+    <label for="term1max">Term 1 Max</label>
+    <input type="number" id="term1max" value="12" min="1" max="12">
+    <label for="term2min">Term 2 Min</label>
+    <input type="number" id="term2min" value="1" min="1" max="12">
+    <label for="term2max">Term 2 Max</label>
+    <input type="number" id="term2max" value="12" min="1" max="12">
+
+    <button id="startButton">Start</button>
+
     <canvas id="container" width="1000" height="1000" background="black">
         <p>Canvas not supported</p>
         <p>Game rendering area</p>
     </canvas>
 
+    <script src="events.js"></script>
     <script src="logger.js"></script>
+    <script src="terms.js"></script>
     <script src="answers.js"></script>
     <script src="explosions.js"></script>
     <script src="question.js"></script>

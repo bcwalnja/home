@@ -57,6 +57,7 @@ function renderTimer() {
   timer.timeRemaining = 120 - (Date.now() - startTime) / 1000;
   if (timer.timeRemaining < 1) {
     timer.text = 'Time is up!';
+    gameRunning = false;
   } else {
     timer.text = Math.round(timer.timeRemaining) + ' seconds remaining';
   }
