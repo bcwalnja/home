@@ -1,7 +1,7 @@
 var logVerbose = false;
 var canvas = document.getElementById('container');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = window.innerWidth * .9;
+canvas.height = window.innerHeight * .9;
 canvas.style.backgroundColor = 'black';
 var qVelocity,
   context,
@@ -26,7 +26,7 @@ var explosions = [];
 // to keep the canvas sized to the window
 window.addEventListener('resize', function () {
   canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  canvas.height = window.innerHeight - 10;
   boundaryX = canvas.width;
   boundaryY = canvas.height;
   context.font = font;
@@ -36,8 +36,9 @@ window.addEventListener('resize', function () {
 });
 
 canvas.addEventListener('click', function (event) {
-  var x = event.clientX;
-  var y = event.clientY;
+  var rect = canvas.getBoundingClientRect();
+  var x = event.clientX - rect.left;
+  var y = event.clientY - rect.top;
   var objectWasClicked = false;
   clickableTextObjects.forEach(function (obj) {
     if (areOverlapping({ x: x, y: y }, obj)) {
@@ -72,7 +73,7 @@ function init() {
   font = fontSize + 'px Arial';
   context.font = font;
   context.fillStyle = 'white';
-  padding = canvas.height * .03;
+  padding = canvas.height * .02;
   a = [];
 
   startTime = Date.now();
