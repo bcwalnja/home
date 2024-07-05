@@ -72,14 +72,14 @@ function init() {
   font = fontSize + 'px Arial';
   context.font = font;
   context.fillStyle = 'white';
-  padding = canvas.height * .03;
+  padding = canvas.height * .02;
   a = [];
 
   startTime = Date.now();
   timer = {};
   timer.x = 10;
   timer.y = fontSize;
-  timer.text = '120 seconds remaining';
+  timer.text = '120';
   timer.onClicked = timerOnClicked;
   clickableTextObjects.push(timer);
 
@@ -113,10 +113,10 @@ function animate() {
 /** min and max are both inclusive */
 function rand(min = 1, max = 10) {
   verbose('rand');
-  let mean = (max + min) / 2;         // 10 + 1 = 11 / 2 = 5.5
-  let range = max - min;              // 10 - 1 = 9
-  let seed = Math.random() - 0.5;     // 0.7 - 0.5 = 0.2
-  let result = mean + seed * range;   // 5.5 + 0.2 * 9 = 5.5 + 1.8 = 7.3
+  let mean = (max + min) / 2;
+  let range = max - min;
+  let seed = Math.random() - 0.5;
+  let result = mean + seed * range;
   return Math.round(result);
 }
 
@@ -271,7 +271,7 @@ function checkIfQuestionIsAnswered() {
   if (q[0].complete) {
     log('question was answered');
     // remove the missile from the array
-    missiles.shift();
+    missiles?.shift();
     var z = context.measureText(q[0].text).width;
     // add a bunch of explosions
     for (let i = 0; i < 20; i++) {
@@ -293,9 +293,9 @@ function renderTimer() {
   verbose('renderTimer');
   timer.timeRemaining = 120 - (Date.now() - startTime) / 1000;
   if (timer.timeRemaining < 1) {
-    timer.text = 'Time is up!';
+    timer.text = 0;
   } else {
-    timer.text = Math.round(timer.timeRemaining) + ' seconds remaining';
+    timer.text = Math.round(timer.timeRemaining);
   }
   context.fillText(timer.text, timer.x, timer.y);
 }
