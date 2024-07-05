@@ -10,6 +10,7 @@ function addEvents() {
     context.strokeStyle = 'white';
   });
   
+  //TODO: figure out why this is causing two answers to be clicked
   canvas.addEventListener('click', function (event) {
     let x = event.clientX;
     let y = event.clientY;

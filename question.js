@@ -8,7 +8,7 @@ function generateNewQuestion(missileCount) {
   log('generating a new question');
   q ??= [];
   var limit = missileCount || 0;
-  limit += 2;
+  limit += 1;
   if (q && q.length > limit) {
     return;
   }

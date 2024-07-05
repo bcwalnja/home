@@ -1,3 +1,5 @@
+let startButton = document.getElementById('startButton');
+startButton.addEventListener('click', startGame);
 let canvas = document.getElementById('container');
 canvas.width = window.innerWidth;
 // make the height be the inner window height minus the top of the canvas
@@ -8,7 +10,6 @@ let qVelocity,
   font,
   fontSize,
   startTime,
-  wasClicked,
   score,
   timer,
   missiles,
@@ -26,13 +27,17 @@ animate();
 
 function startGame() {
   if (!gameRunning) {
+    gameRunning = true;
+    //start button text to Stop
+    startButton.innerHTML = 'Stop';
     init();
     animate();
-    gameRunning = !gameRunning;
+  } else {
+    gameRunning = false;
+    destroy();
+    startButton.innerHTML = 'Start';
   }
 }
-
-//document.getElementById('startButton').addEventListener('click', startGame);
 
 function init() {
   //TODO: make this configurable as easy, medium, hard
@@ -64,15 +69,22 @@ function init() {
   timer.text = '120';
   timer.onClicked = timerOnClicked;
   clickableTextObjects.push(timer);
+}
 
-  generateNewQuestion(missiles?.length);
-  generateNewAnswers();
+function destroy() {
+  startTime = 0,
+    score = null,
+    timer = null,
+    missiles = null,
+    a = null,
+    q = null;
 }
 
 function draw() {
   verbose('draw');
   if (!q || !q.length) {
     generateNewQuestion(missiles?.length);
+    generateNewAnswers();
   }
   checkIfQuestionIsAnswered();
 
@@ -86,10 +98,13 @@ function draw() {
 }
 
 function animate() {
+  if (!gameRunning) {
+    return;
+  }
   verbose('animate');
   context.clearRect(0, 0, canvas.width, canvas.height);
   draw();
-  requestAnimationFrame(animate);
+  var frame = requestAnimationFrame(animate);
 }
 
 function timerOnClicked(obj) {
