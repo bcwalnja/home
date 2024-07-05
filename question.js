@@ -15,6 +15,7 @@ function generateNewQuestion(missileCount) {
 
   q ??= [];
   var q1 = {};
+  q1.time = Date.now();
   q1.x = canvas.width / 2 - context.measureText(q1.text).width / 2;
   q1.y = fontSize;
   q1.term1 = rand(terms.term1.min, terms.term1.max);

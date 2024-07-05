@@ -1,6 +1,7 @@
 let canvas = document.getElementById('container');
 canvas.width = window.innerWidth;
-canvas.height = window.innerHeight * .9;
+// make the height be the inner window height minus the top of the canvas
+canvas.height = window.innerHeight * .8;
 canvas.style.backgroundColor = 'black';
 let qVelocity,
   context,
@@ -20,6 +21,9 @@ let gameRunning = false;
 // attach a listener to the window resize event
 // to keep the canvas sized to the window
 
+init();
+animate();
+
 function startGame() {
   if (!gameRunning) {
     init();
@@ -28,7 +32,7 @@ function startGame() {
   }
 }
 
-document.getElementById('startButton').addEventListener('click', startGame);
+//document.getElementById('startButton').addEventListener('click', startGame);
 
 function init() {
   //TODO: make this configurable as easy, medium, hard
@@ -49,6 +53,7 @@ function init() {
   font = fontSize + 'px Arial';
   context.font = font;
   context.fillStyle = 'white';
+  //something's wrong with `areOverlappting` function
   padding = canvas.height * .03;
   a = [];
 
@@ -56,7 +61,7 @@ function init() {
   timer = {};
   timer.x = 10;
   timer.y = fontSize;
-  timer.text = '120 seconds remaining';
+  timer.text = '120';
   timer.onClicked = timerOnClicked;
   clickableTextObjects.push(timer);
 
@@ -81,12 +86,10 @@ function draw() {
 }
 
 function animate() {
-  while (gameRunning) {
   verbose('animate');
   context.clearRect(0, 0, canvas.width, canvas.height);
   draw();
-    requestAnimationFrame(animate);
-  }
+  requestAnimationFrame(animate);
 }
 
 function timerOnClicked(obj) {

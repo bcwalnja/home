@@ -59,7 +59,7 @@ function renderTimer() {
     timer.text = 'Time is up!';
     gameRunning = false;
   } else {
-    timer.text = Math.round(timer.timeRemaining) + ' seconds remaining';
+    timer.text = Math.ceil(timer.timeRemaining);
   }
   context.fillText(timer.text, timer.x, timer.y);
 }

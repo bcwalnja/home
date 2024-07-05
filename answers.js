@@ -59,7 +59,7 @@ function generateNewAnswers() {
     if (q[0].complete) {
       log('question was answered');
       // remove the missile from the array
-      missiles.shift();
+      missiles?.shift();
       var z = context.measureText(q[0].text).width;
       // add a bunch of explosions
       for (let i = 0; i < 20; i++) {
@@ -68,9 +68,11 @@ function generateNewAnswers() {
         addExplosion(x, y);
       }
       if (answer && answer == q[0].answer) {
-        score += 2;
+        // score is 10_000 minus the time it took to answer
+        var time = Date.now() - q[0].time;
+        score += 10_000 - time;
       } else {
-        score -= 1;
+        score -= 2_000;
       }
   
       removeQuestion();
