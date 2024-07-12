@@ -1,4 +1,5 @@
 var logVerbose = false;
+var highScore = localStorage.getItem('highScore') || 0;
 var canvas = document.getElementById('container');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -64,9 +65,9 @@ function init() {
 
   // TODO: make these configurable
   term1Min = 1;
-  term1Max = 12;
+  term1Max = 10;
   term2Min = 1;
-  term2Max = 12;
+  term2Max = 10;
 
   fontSize = Math.floor(canvas.height / 20);
   font = fontSize + 'px Arial';
@@ -107,6 +108,16 @@ function animate() {
   verbose('animate');
   context.clearRect(0, 0, canvas.width, canvas.height);
   draw();
+  if (timer.text == 0) {
+    var gameOver = 'Game Over! Score: ' + score;
+    var width = context.measureText(gameOver).width;
+    var x = canvas.width / 2 - width / 2;
+    var y = canvas.height / 2;
+    context.fillText(gameOver, x, y);
+    var highScoreText = 'High Score: ' + highScore;
+    context.fillText(highScoreText, x, y + fontSize * 2);
+    return;
+  }
   requestAnimationFrame(animate);
 }
 
@@ -281,6 +292,10 @@ function checkIfQuestionIsAnswered() {
     }
     if (answer && answer == q[0].answer) {
       score += 2;
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore);
+      }
     } else {
       score -= 1;
     }
