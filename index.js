@@ -1,4 +1,5 @@
 var logVerbose = false;
+var highScore = localStorage.getItem('highScore') || 0;
 var canvas,
   qVelocity,
   context,
@@ -50,9 +51,15 @@ function showMainMenu() {
   var width = width + padding * 4;
   var height = fontSize + padding;
   context.strokeRect(left, top, width, height);
+
+  // high score
+  var highScoreText = "High Score: " + highScore;
+  var highScoreWidth = context.measureText(highScoreText).width;
+  context.fillText(highScoreText, canvas.width / 2 - highScoreWidth / 2, canvas.height / 2 + fontSize * 2);
+
 }
 
-function startGame() {
+function startGame(obj) {
   if (!canvas) {
     initCanvas()
   }
@@ -63,6 +70,7 @@ function startGame() {
   initGame();
   initTimer();
   animate();
+  clickableTextObjects = clickableTextObjects.filter(x => x.text != obj.text);
 }
 
 function initCanvas() {
@@ -71,6 +79,8 @@ function initCanvas() {
   canvas.height = window.innerHeight;
   boundaryX = canvas.width;
   boundaryY = canvas.height;
+  canvas.style.backgroundColor = 'black';
+  canvas.removeEventListener('click', handleCanvasClick());
   canvas.addEventListener('click', handleCanvasClick());
 }
 
@@ -88,7 +98,7 @@ function initVariables() {
   //init variables
   explosionDuration = 5000;
   qVelocity = canvas.height / 1000;
-  
+
   padding = canvas.height * .02;
   a = [];
 }
@@ -115,10 +125,10 @@ function handleCanvasClick() {
 function initGame() {
   // TODO: make these configurable
   term1Min = 1;
-  term1Max = 12;
+  term1Max = 10;
   term2Min = 1;
-  term2Max = 12;
-  
+  term2Max = 10;
+
   generateNewQuestion();
   generateNewAnswers();
 }
@@ -128,7 +138,7 @@ function initTimer() {
   timer = {};
   timer.x = 10;
   timer.y = fontSize;
-  timer.text = '120';
+  timer.text = '2';
   timer.onClicked = timerOnClicked;
   clickableTextObjects.push(timer);
 }
@@ -153,6 +163,11 @@ function animate() {
   verbose('animate');
   context.clearRect(0, 0, canvas.width, canvas.height);
   draw();
+  if (timer.text == 0) {
+    destroy();
+    showMainMenu();
+    return;
+  }
   requestAnimationFrame(animate);
 }
 
@@ -327,6 +342,11 @@ function checkIfQuestionIsAnswered() {
     }
     if (answer && answer == q[0].answer) {
       score += 2;
+      if (score > highScore) {
+        highScore = score;
+        // save high score to local storate
+        localStorage.setItem('highScore', highScore);
+      }
     } else {
       score -= 1;
     }
@@ -337,7 +357,7 @@ function checkIfQuestionIsAnswered() {
 
 function renderTimer() {
   verbose('renderTimer');
-  timer.timeRemaining = 120 - (Date.now() - startTime) / 1000;
+  timer.timeRemaining = 2 - (Date.now() - startTime) / 1000;
   if (timer.timeRemaining < 1) {
     timer.text = 0;
   } else {
@@ -372,7 +392,7 @@ function renderExplosions() {
       if (!explosion.ratio) {
         explosion.ratio = rand(0, 100) / 100;
       }
-      
+
       var percent = 1 - (now - explosion.startTime) / explosionDuration;
       var r = Math.ceil(255 * percent).toString(16).padStart(2, '0');
       var g = Math.ceil(255 * percent * explosion.ratio).toString(16).padStart(2, '0');
@@ -446,4 +466,15 @@ function verbose(msg) {
   if (this.logVerbose) {
     console.log(msg);
   }
+}
+
+function destroy() {
+  verbose('destroy');
+  clickableTextObjects = [];
+  explosions = [];
+  missiles = [];
+  q = [];
+  a = [];
+  score = 0;
+  timer = {};
 }
