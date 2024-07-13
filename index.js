@@ -1,4 +1,5 @@
 var logVerbose = false;
+var operation = 'multiplication';
 var highScore = localStorage.getItem('highScore') || 0;
 var canvas = document.getElementById('container');
 canvas.width = window.innerWidth;
@@ -84,14 +85,47 @@ function init() {
   timer.onClicked = timerOnClicked;
   clickableTextObjects.push(timer);
 
-  generateNewQuestion();
-  generateNewAnswers();
+  generateQuestionOfType();
+  generateAnswersOfType();
+}
+
+function generateQuestionOfType() {
+  switch (operation) {
+    case 'multiplication':
+      generateNewMultiplicationQuestion();
+      break;
+    case 'division':
+      generateNewDivisionQuestion();
+      break;
+    case 'subtraction':
+      generateNewSubtractionQuestion();
+      break;
+    default:
+      generateNewAdditionQuestion();
+  }
+
+}
+
+function generateAnswersOfType() {
+  switch (operation) {
+    case 'multiplication':
+      generateNewMultiplicationAnswers();
+      break;
+    case 'division':
+      generateNewDivisionAnswers();
+      break;
+    case 'subtraction':
+      generateNewSubtractionAnswers();
+      break;
+    default:
+      generateNewAdditionAnswers();
+  }
 }
 
 function draw() {
   verbose('draw');
   if (!q || !q.length) {
-    generateNewQuestion();
+    generateQuestionOfType();
   }
   checkIfQuestionIsAnswered();
 
@@ -131,7 +165,7 @@ function rand(min = 1, max = 10) {
   return Math.round(result);
 }
 
-function generateNewQuestion() {
+function generateNewMultiplicationQuestion() {
   log('generating a new question');
 
   // the limit of q is 2 plus the number of missiles
@@ -151,7 +185,48 @@ function generateNewQuestion() {
   q.push(q1);
 }
 
-function generateNewAnswers() {
+function generateNewDivisionQuestion() {
+  log('generating a new division question');
+
+  // the limit of q is 2 plus the number of missiles
+  if (q && q.length > 2 + (missiles?.length || 0)) {
+    return;
+  }
+
+  q ??= [];
+  var q1 = {};
+  q1.x = canvas.width / 2 - context.measureText(q1.text).width / 2;
+  q1.y = fontSize;
+  q1.term1 = rand(term1Min, term1Max);
+  q1.term2 = rand(1, q1.term1);
+  q1.answer = q1.term1 / q1.term2;
+  q1.text = q1.term1 + ' / ' + q1.term2 + ' = ?';
+  q1.complete = false;
+  q.push(q1);
+
+}
+
+function generateNewSubtractionQuestion() {
+  log('generating a new question');
+
+  // the limit of q is 2 plus the number of missiles
+  if (q && q.length > 2 + (missiles?.length || 0)) {
+    return;
+  }
+
+  q ??= [];
+  var q1 = {};
+  q1.x = canvas.width / 2 - context.measureText(q1.text).width / 2;
+  q1.y = fontSize;
+  q1.term1 = rand(term1Min, term1Max);
+  q1.term2 = rand(0, q1.term1);
+  q1.answer = q1.term1 - q1.term2;
+  q1.text = q1.term1 + ' - ' + q1.term2 + ' = ?';
+  q1.complete = false;
+  q.push(q1);
+}
+
+function generateNewMultiplicationAnswers() {
   log('generating new answers');
   a ??= [];
   var a1 = {};
@@ -171,6 +246,59 @@ function generateNewAnswers() {
     a4.text = rand(1, 12) * rand(1, 12);
   } while (a1.text == a4.text || a2.text == a4.text || a3.text == a4.text);
 
+  a1.isAnAnswer = a2.isAnAnswer = a3.isAnAnswer = a4.isAnAnswer = true;
+
+  a1.y = a2.y = a3.y = a4.y = canvas.height - fontSize - 10;
+  a1.x = canvas.width * 0.1;
+  a2.x = canvas.width * 0.3;
+  a3.x = canvas.width * 0.5;
+  a4.x = canvas.width * 0.7;
+
+  a1.onClicked = a2.onClicked = a3.onClicked = a4.onClicked = aOnClicked;
+  //remove the old answers from clickableTextObjects
+  clickableTextObjects = clickableTextObjects.filter(x => !x.isAnAnswer);
+  clickableTextObjects.push(a1);
+  clickableTextObjects.push(a2);
+  clickableTextObjects.push(a3);
+  clickableTextObjects.push(a4);
+
+  a = [a1, a2, a3, a4];
+
+  // the correct answer is the answer to the last question in the q array
+  var correctAnswer = q[q.length - 1].answer;
+
+  if (!a.some(x => x.text == correctAnswer)) {
+    a[rand(0, 3)].text = correctAnswer;
+  }
+}
+
+function generateNewDivisionAnswers() {
+  //TODO: this doesn't actually work correctly yet
+  log('generating new answers');
+  a ??= [];
+  var a1 = {};
+  var a2 = {};
+  var a3 = {};
+  var a4 = {};
+
+  log('q[0].term1: ' + q[0].term1);
+  var upper = q[0].term1 > 4 ? q[0].term1 : 6;
+  a1.text = rand(0, upper);
+  log('a1.text: ' + a1.text);
+  do {
+    a2.text = rand(0, upper);
+  } while (a1.text == a2.text);
+  log('a2.text: ' + a2.text);
+  do {
+    a3.text = rand(0, upper);
+  } while (a1.text == a3.text || a2.text == a3.text);
+  log('a3.text: ' + a3.text);
+  do {
+    a4.text = rand(0, upper);
+  } while (a1.text == a4.text || a2.text == a4.text || a3.text == a4.text);
+  log('a4.text: ' + a4.text);
+
+  log('a1.text: ' + a1.text);
   a1.isAnAnswer = a2.isAnAnswer = a3.isAnAnswer = a4.isAnAnswer = true;
 
   a1.y = a2.y = a3.y = a4.y = canvas.height - fontSize - 10;
@@ -398,8 +526,8 @@ function aOnClicked(obj) {
   missiles ??= [];
   missiles.push(missile);
 
-  generateNewQuestion();
-  generateNewAnswers();
+  generateQuestionOfType();
+  generateAnswersOfType();
 }
 
 function timerOnClicked(obj) {
