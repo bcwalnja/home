@@ -34,9 +34,7 @@ function showMainMenu() {
   context.fillText(highScoreText, canvas.width / 2 - highScoreWidth / 2, canvas.height / 2 + fontSize * 2);
 }
 
-function startGame(obj) {
-  // hide gameSetUpControls
-  // (add class hidden)
+function startGame(startButton) {
   gameSetUpControls.classList.add('hidden');
 
   if (!canvas) {
@@ -48,8 +46,20 @@ function startGame(obj) {
   initVariables();
   initGame();
   initTimer();
+  filter(clickableTextObjects, x => x.text != startButton.text);
+ 
   animate();
-  clickableTextObjects = clickableTextObjects.filter(x => x.text != obj.text);
+}
+
+function filter(list, lambda) {
+  const copyList = [];
+  for (let i = 0; i < list.length; i++) {
+    if (lambda(list[i])) {
+      copyList.push(list[i]);
+    }
+  }
+  list.length = 0;
+  Array.prototype.push.apply(list, copyList);
 }
 
 function initCanvas() {
@@ -63,6 +73,7 @@ function initCanvas() {
 }
 
 function initContext() {
+  log("initContext");
   context = canvas.getContext('2d');
   fontSize = Math.floor(canvas.height / 20);
   font = fontSize + 'px Arial';
@@ -73,7 +84,7 @@ function initContext() {
 }
 
 function initVariables() {
-  log()
+  log("initVariables");
   gameLength = 120;
   explosionDuration = 5000;
   qVelocity = canvas.height / 1000;
@@ -83,17 +94,17 @@ function initVariables() {
 }
 
 function initGame() {
-  // TODO: make these configurable
+  log("initGame");
   term1Min = 1;
-  term1Max = 10;
+  term1Max = Number(document.getElementById('term-1-max')?.value);
   term2Min = 1;
-  term2Max = 10;
-
-  generateNewQuestion();
-  generateNewAnswers();
+  term2Max = Number(document.getElementById('term-2-max')?.value);
+  log("term values: ", term1Min, term1Max, term2Min, term2Max);
+  generateQuestionAndAnswers();
 }
 
 function initTimer() {
+  log("initTimer");
   startTime = Date.now();
   timer = {};
   timer.x = 10;

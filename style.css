@@ -4,14 +4,14 @@ body {
   font-family: 'Arial', sans-serif;
 }
 
-/* #container {
+#container {
   position: absolute;
   margin: auto;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
-} */
+}
 
 .game-set-up-controls {
   position: absolute;

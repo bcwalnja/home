@@ -20,7 +20,7 @@ function handleCanvasClick() {
 function draw() {
   verbose('draw');
   if (!q || !q.length) {
-    generateNewQuestion();
+    generateQuestionAndAnswers();
   }
   checkIfQuestionIsAnswered();
 
@@ -53,6 +53,12 @@ function rand(min = 1, max = 10) {
   let seed = Math.random() - 0.5;
   let result = mean + seed * range;
   return Math.round(result);
+}
+
+function generateQuestionAndAnswers() {
+  // eventually, I'll add the code to switch on operation here.
+  generateNewQuestion();
+  generateNewAnswers();
 }
 
 function generateNewQuestion() {
@@ -333,9 +339,7 @@ function aOnClicked(obj) {
   // remove the answer from answers and add it to missiles
   missiles ??= [];
   missiles.push(missile);
-
-  generateNewQuestion();
-  generateNewAnswers();
+  generateQuestionAndAnswers();
 }
 
 function timerOnClicked(obj) {
