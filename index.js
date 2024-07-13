@@ -27,6 +27,7 @@ var explosions = [];
 window.addEventListener('resize', initCanvas);
 
 showMainMenu();
+canvas.addEventListener('click', handleCanvasClick());
 
 function showMainMenu() {
   //clear the canvas
@@ -84,8 +85,7 @@ function initCanvas() {
   boundaryX = canvas.width;
   boundaryY = canvas.height;
   canvas.style.backgroundColor = 'black';
-  canvas.removeEventListener('click', handleCanvasClick());
-  canvas.addEventListener('click', handleCanvasClick());
+  //canvas.removeEventListener('click', handleCanvasClick());
 }
 
 function initContext() {
@@ -100,7 +100,7 @@ function initContext() {
 
 function initVariables() {
   //init variables
-  gameLength = 120;
+  gameLength = 10;
   explosionDuration = 5000;
   qVelocity = canvas.height / 1000;
 
