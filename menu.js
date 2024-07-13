@@ -69,7 +69,6 @@ function initCanvas() {
   boundaryX = canvas.width;
   boundaryY = canvas.height;
   canvas.style.backgroundColor = 'black';
-  //canvas.removeEventListener('click', handleCanvasClick());
 }
 
 function initContext() {

@@ -1,20 +1,39 @@
-function handleCanvasClick() {
-  return function (event) {
-    var x = event.clientX;
-    var y = event.clientY;
-    var objectWasClicked = false;
-    clickableTextObjects.forEach(function (obj) {
-      if (areOverlapping({ x: x, y: y }, obj)) {
-        objectWasClicked = true;
-        if (obj.onClicked) {
-          obj.onClicked(obj);
-        }
+var test = 0;
+
+function handleCanvasClick(event) {
+  log('handleCanvasClick', event);
+  log('lastClick', lastClick);
+
+  if (test == 2) {
+    var test1 = a;
+    var test2 = q;
+    var test3 = clickableTextObjects;
+    var test4 = explosions;
+    var test5 = missiles;
+  }
+
+  var now = Date.now();
+  if (now - lastClick < 200) {
+    log('click event ignored');
+    return;
+  }
+  lastClick = Date.now();
+  
+  var x = event.clientX;
+  var y = event.clientY;
+  var objectWasClicked = false;
+  clickableTextObjects.forEach(function (obj) {
+    if (areOverlapping({ x: x, y: y }, obj)) {
+      objectWasClicked = true;
+      if (obj.onClicked) {
+        obj.onClicked(obj);
       }
-    });
-    if (!objectWasClicked) {
-      addExplosion(x, y);
     }
-  };
+  });
+  if (!objectWasClicked) {
+    addExplosion(x, y);
+  }
+  test++;
 }
 
 function draw() {
@@ -347,8 +366,8 @@ function timerOnClicked(obj) {
   startTime += 1000;
 }
 
-function log(msg) {
-  console.log(msg);
+function log(...msg) {
+  console.log(...msg);
 }
 
 function verbose(msg) {
@@ -360,9 +379,9 @@ function verbose(msg) {
 function destroy() {
   verbose('destroy');
   //reset clickableTextObjects, explosions, width, startButton, left, top, width, height, highScoreText, highScoreWidth, clickableTextObjects, canvas, width, height, boundaryX, boundaryY, backgroundColor, context, fontSize, font, font, fillStyle, lineWidth, strokeStyle, explosionDuration, qVelocity, padding, objectWasClicked, objectWasClicked, term1Min, term1Max, term2Min, term2Max, startTime, timer, text, onClicked, text, min, max, mean, range, seed, result, q1, term1, term2, answer, text, complete, a1, a2, a3, a4, text, text, text, text, text, text, text, text, text, text, isAnAnswer, isAnAnswer, isAnAnswer, isAnAnswer, onClicked, onClicked, onClicked, onClicked, clickableTextObjects, correctAnswer, text, text, complete, left, top, width, height, topA, bottomA, leftA, widthA, rightA, topB, bottomB, leftB, widthB, rightB, missile, complete, answer, answer, highScore, timeRemaining, text, text, now, explosion, ratio, percent, color, point, fillStyle, explosion, startTime, points, dx, dy, missile, text, dx, dy, clickableTextObjects, explosions, missiles, score, timer, 
-  clickableTextObjects = [];
-  explosions = [];
-  missiles = [];
+  clickableTextObjects.length = 0;
+  explosions.length = 0;
+  missiles.length = 0;
   score = 0;
   timer = {
     timeRemaining: 0,

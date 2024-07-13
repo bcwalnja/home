@@ -8,7 +8,7 @@ let canvas,
   fontSize,
   startTime,
   gameLength,
-  wasClicked,
+  lastClick,
   score,
   timer,
   missiles,
@@ -32,5 +32,5 @@ showMainMenu();
 clickableTextObjects.push(startButton);
 //on click operation = event?.target?.innerText
 gameModeControls.addEventListener('click', (e) => { operation = e.target.innerText; });
-canvas.addEventListener('click', handleCanvasClick());
+canvas.addEventListener('click', handleCanvasClick);
 window.addEventListener('resize', initCanvas);
