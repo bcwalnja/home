@@ -43,16 +43,17 @@ function showMainMenu() {
       y: canvas.height / 2 - fontSize / 2,
       onClicked: startGame
     };
-    clickableTextObjects.push(startButton);
   }
 
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.fillText(startButton.text, startButton.x, startButton.y);
+  clickableTextObjects.push(startButton);
+
   // box around start button
   var left = startButton.x - padding / 2;
-  var top = startButton.y - fontSize - padding / 2;
-  var width = width + padding * 2;
-  var height = fontSize + padding * 2;
+  var top = startButton.y - fontSize - padding / 4;
+  var width = width + padding;
+  var height = fontSize + padding;
   context.strokeRect(left, top, width, height);
 
   // high score
@@ -99,6 +100,7 @@ function initContext() {
 
 function initVariables() {
   //init variables
+  gameLength = 120;
   explosionDuration = 5000;
   qVelocity = canvas.height / 1000;
 
@@ -484,5 +486,7 @@ function destroy() {
     x: canvas.width / 2,
     y: fontSize
   };
-  startTime = Date.now();
+  canvas?.removeEventListener('click', handleCanvasClick());
+  canvas = {};
+  context = {};
 }
