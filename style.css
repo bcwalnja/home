@@ -1,12 +1,33 @@
 body {
-  background: #102131;
+  background: black;
+  color: white;
+  font-family: 'Arial', sans-serif;
 }
 
-#container {
+/* #container {
   position: absolute;
   margin: auto;
   top: 0;
   bottom: 0;
   left: 0;
   right: 0;
+} */
+
+.game-set-up-controls {
+  position: absolute;
+  top: 5%;
+  left:5%;
+  font-size: 1.75rem;
+}
+
+.game-set-up-controls > div {
+  position: relative;
+}
+
+input {
+  font-size: 100%;
+}
+
+.hidden {
+  display: none;
 }

@@ -7,12 +7,48 @@
 </head>
 
 <body>
-    <canvas id="container" width="1000" height="1000" background="black">
-        <p>Canvas not supported</p>
-        <p>Game rendering area</p>
-    </canvas>
-
-    <script src="index.js"></script>
+    <div>
+        <canvas id="container" width="1000" height="1000" background="black">
+            <p>Canvas not supported</p>
+            <p>Game rendering area</p>
+        </canvas>
+    </div>
+    <div id="game-set-up-controls" class="game-set-up-controls">
+        <div>
+            <div>Game Over</div>
+        </div>
+        <div id="game-mode-controls" class="game-mode-controls">
+            <div>
+                <input type="radio" id="addition" name="game-mode" value="addition" checked>
+                <label for="addition">Addition</label>
+            </div>
+            <div>
+                <input type="radio" id="subtraction" name="game-mode" value="subtraction">
+                <label for="subtraction">Subtraction</label>
+            </div>
+            <div>
+                <input type="radio" id="multiplication" name="game-mode" value="multiplication">
+                <label for="multiplication">Multiplication</label>
+            </div>
+            <div>
+                <input type="radio" id="division" name="game-mode" value="division">
+                <label for="division">Division</label>
+            </div>
+        </div>
+        <div>
+            <div id="term-1-controls">
+                <label for="number-input">Term 1 Max</label>
+                <input type="number" id="number-input" min="0" max="20" value="10">
+            </div>
+            <div id="term-2-controls">
+                <label for="number-input">Term 2 Max</label>
+                <input type="number" id="number-input" min="0" max="100" value="10">
+            </div>
+        </div>
+    </div>
+    <script src="menu.js"></script>
+    <script src="game.js"></script>
+    <script src="init.js"></script>
 </body>
 
 </html>
