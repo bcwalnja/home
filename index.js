@@ -6,6 +6,7 @@ var canvas,
   font,
   fontSize,
   startTime,
+  gameLength,
   wasClicked,
   score,
   timer,
@@ -16,15 +17,14 @@ var canvas,
   term1Max,
   term2Min,
   term2Max,
+  startButton,
   a,
   q;
 var clickableTextObjects = [];
 var explosions = [];
 // attach a listener to the window resize event
 // to keep the canvas sized to the window
-window.addEventListener('resize', function () {
-  initCanvas();
-});
+window.addEventListener('resize', initCanvas);
 
 showMainMenu();
 
@@ -33,23 +33,26 @@ function showMainMenu() {
   initCanvas();
   initContext();
   initVariables();
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  var width = context.measureText("Start").width;
-  context.fillText("Start", canvas.width / 2, canvas.height / 2);
-  // start button
-  var startButton = {
-    text: "Start",
-    x: canvas.width / 2 - width / 2,
-    y: canvas.height / 2 - fontSize / 2,
-    onClicked: startGame
-  };
-  clickableTextObjects.push(startButton);
 
+  var width = context.measureText("Start").width;
+  if (!startButton) {
+    startButton = {
+      text: "Start",
+      width: width,
+      x: canvas.width / 2 - width / 2,
+      y: canvas.height / 2 - fontSize / 2,
+      onClicked: startGame
+    };
+    clickableTextObjects.push(startButton);
+  }
+
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillText(startButton.text, startButton.x, startButton.y);
   // box around start button
-  var left = startButton.x + padding / 2;
-  var top = startButton.y - fontSize + padding;
-  var width = width + padding * 4;
-  var height = fontSize + padding;
+  var left = startButton.x - padding / 2;
+  var top = startButton.y - fontSize - padding / 2;
+  var width = width + padding * 2;
+  var height = fontSize + padding * 2;
   context.strokeRect(left, top, width, height);
 
   // high score
@@ -138,7 +141,7 @@ function initTimer() {
   timer = {};
   timer.x = 10;
   timer.y = fontSize;
-  timer.text = '2';
+  timer.text = gameLength;
   timer.onClicked = timerOnClicked;
   clickableTextObjects.push(timer);
 }
@@ -344,7 +347,7 @@ function checkIfQuestionIsAnswered() {
       score += 2;
       if (score > highScore) {
         highScore = score;
-        // save high score to local storate
+        // save high score to local storage
         localStorage.setItem('highScore', highScore);
       }
     } else {
@@ -357,7 +360,7 @@ function checkIfQuestionIsAnswered() {
 
 function renderTimer() {
   verbose('renderTimer');
-  timer.timeRemaining = 2 - (Date.now() - startTime) / 1000;
+  timer.timeRemaining = gameLength - (Date.now() - startTime) / 1000;
   if (timer.timeRemaining < 1) {
     timer.text = 0;
   } else {
@@ -470,11 +473,16 @@ function verbose(msg) {
 
 function destroy() {
   verbose('destroy');
+  //reset clickableTextObjects, explosions, width, startButton, left, top, width, height, highScoreText, highScoreWidth, clickableTextObjects, canvas, width, height, boundaryX, boundaryY, backgroundColor, context, fontSize, font, font, fillStyle, lineWidth, strokeStyle, explosionDuration, qVelocity, padding, objectWasClicked, objectWasClicked, term1Min, term1Max, term2Min, term2Max, startTime, timer, text, onClicked, text, min, max, mean, range, seed, result, q1, term1, term2, answer, text, complete, a1, a2, a3, a4, text, text, text, text, text, text, text, text, text, text, isAnAnswer, isAnAnswer, isAnAnswer, isAnAnswer, onClicked, onClicked, onClicked, onClicked, clickableTextObjects, correctAnswer, text, text, complete, left, top, width, height, topA, bottomA, leftA, widthA, rightA, topB, bottomB, leftB, widthB, rightB, missile, complete, answer, answer, highScore, timeRemaining, text, text, now, explosion, ratio, percent, color, point, fillStyle, explosion, startTime, points, dx, dy, missile, text, dx, dy, clickableTextObjects, explosions, missiles, score, timer, 
   clickableTextObjects = [];
   explosions = [];
   missiles = [];
-  q = [];
-  a = [];
   score = 0;
-  timer = {};
+  timer = {
+    timeRemaining: 0,
+    text: 0,
+    x: canvas.width / 2,
+    y: fontSize
+  };
+  startTime = Date.now();
 }
