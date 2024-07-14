@@ -126,6 +126,7 @@ function draw() {
   verbose('draw');
   if (!q || !q.length) {
     generateQuestionOfType();
+    generateAnswersOfType();
   }
   checkIfQuestionIsAnswered();
 
