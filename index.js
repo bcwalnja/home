@@ -1,5 +1,5 @@
 var logVerbose = false;
-var operation = 'multiplication';
+var operation = 'addition';
 var highScore = localStorage.getItem('highScore') || 0;
 var canvas = document.getElementById('container');
 canvas.width = window.innerWidth;
@@ -165,6 +165,73 @@ function rand(min = 1, max = 10) {
   return Math.round(result);
 }
 
+function generateNewAdditionQuestion() {
+  log('generating a new question');
+
+  // the limit of q is 2 plus the number of missiles
+  if (q && q.length > 2 + (missiles?.length || 0)) {
+    return;
+  }
+
+  q ??= [];
+  var q1 = {};
+  q1.x = canvas.width / 2 - context.measureText(q1.text).width / 2;
+  q1.y = fontSize;
+  q1.answer = rand(1, 20);
+  q1.term1 = rand(1, q1.answer);
+  q1.term2 = q1.answer - q1.term1;
+  q1.text = q1.term1 + ' + ' + q1.term2 + ' = ?';
+  q1.complete = false;
+  q.push(q1);
+
+}
+
+function generateNewAdditionAnswers() {
+  log('generating new answers');
+  a ??= [];
+  var a1 = {};
+  var a2 = {};
+  var a3 = {};
+  var a4 = {};
+
+  a1.text = rand(1, 20);
+
+  do {
+    a2.text = rand(1, 20);
+  } while (a1.text == a2.text);
+  do {
+    a3.text = rand(1, 20);
+  } while (a1.text == a3.text || a2.text == a3.text);
+  do {
+    a4.text = rand(1, 20);
+  } while (a1.text == a4.text || a2.text == a4.text || a3.text == a4.text);
+
+  a1.isAnAnswer = a2.isAnAnswer = a3.isAnAnswer = a4.isAnAnswer = true;
+
+  a1.y = a2.y = a3.y = a4.y = canvas.height - fontSize - 10;
+  a1.x = canvas.width * 0.1;
+  a2.x = canvas.width * 0.3;
+  a3.x = canvas.width * 0.5;
+  a4.x = canvas.width * 0.7;
+
+  a1.onClicked = a2.onClicked = a3.onClicked = a4.onClicked = aOnClicked;
+  //remove the old answers from clickableTextObjects
+  clickableTextObjects = clickableTextObjects.filter(x => !x.isAnAnswer);
+  clickableTextObjects.push(a1);
+  clickableTextObjects.push(a2);
+  clickableTextObjects.push(a3);
+  clickableTextObjects.push(a4);
+
+  a = [a1, a2, a3, a4];
+
+  // the correct answer is the answer to the last question in the q array
+  var correctAnswer = q[q.length - 1].answer;
+
+  if (!a.some(x => x.text == correctAnswer)) {
+    a[rand(0, 3)].text = correctAnswer;
+  }
+}
+
 function generateNewMultiplicationQuestion() {
   log('generating a new question');
 
@@ -199,8 +266,8 @@ function generateNewDivisionQuestion() {
   q1.y = fontSize;
   q1.term1 = rand(term1Min, term1Max);
   q1.term2 = rand(1, q1.term1);
-  q1.answer = q1.term1 / q1.term2;
-  q1.text = q1.term1 + ' / ' + q1.term2 + ' = ?';
+  q1.answer = q1.term2;
+  q1.text = q1.term1 * q1.term2 + ' / ' + q1.term1 + ' = ?';
   q1.complete = false;
   q.push(q1);
 
@@ -281,8 +348,8 @@ function generateNewDivisionAnswers() {
   var a3 = {};
   var a4 = {};
 
-  log('q[0].term1: ' + q[0].term1);
-  var upper = q[0].term1 > 4 ? q[0].term1 : 6;
+  log('term1Max: ' + term1Max);
+  var upper = term1Max > 4 ? term1Max : 6;
   a1.text = rand(0, upper);
   log('a1.text: ' + a1.text);
   do {
