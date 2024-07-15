@@ -1,5 +1,5 @@
 var logVerbose = false;
-var operation = 'addition';
+var operation = localStorage.getItem('operation') || 'multiplication';
 var highScore = localStorage.getItem('highScore') || 0;
 var canvas = document.getElementById('container');
 canvas.width = window.innerWidth;
@@ -442,7 +442,12 @@ function renderMissiles() {
       x.x += x.dx;
       x.y += x.dy;
     }
-    context.fillText(x.text, x.x, x.y);
+    
+    context.save(); // Save the current context state
+    context.translate(x.x, x.y); // Translate to the missile's position
+    context.rotate(-45 * Math.PI / 180); // Rotate 45 degrees to the left
+    context.fillText('\u{1F680}', 0, 0); // Draw the emoji at the translated and rotated position
+    context.restore(); // Restore the context to its original state
   });
 }
 
@@ -490,7 +495,6 @@ function checkIfQuestionIsAnswered() {
       score += 2;
       if (score > highScore) {
         highScore = score;
-        localStorage.setItem('highScore', highScore);
       }
     } else {
       score -= 1;
