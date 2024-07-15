@@ -246,7 +246,13 @@ function renderMissiles() {
       x.x += x.dx;
       x.y += x.dy;
     }
-    context.fillText(x.text, x.x, x.y);
+    
+    context.fillText(x.text, x.x + padding * 2, x.y);
+    context.save(); // Save the current context state
+    context.translate(x.x, x.y); // Translate to the missile's position
+    context.rotate(-45 * Math.PI / 180); // Rotate 45 degrees to the left
+    context.fillText('\u{1F680}', 0, 0); // Draw the emoji at the translated and rotated position
+    context.restore(); // Restore the context to its original state
   });
 }
 
@@ -391,8 +397,10 @@ function aOnClicked(obj) {
   missile.text = obj.text;
   missile.x = obj.x;
   missile.y = obj.y;
-  missile.dx = (q[0].x - obj.x) / 100;
-  missile.dy = (q[0].y - obj.y + padding) / 100;
+  // about 120 frames to reach the question (2 seconds)
+  var objCenter = context.measureText(obj.text).width / 2;
+  missile.dx = (q[0].x - obj.x + objCenter) / 120;
+  missile.dy = (q[0].y - obj.y + padding) / 120;
 
   // remove the answer from answers and add it to missiles
   missiles ??= [];
